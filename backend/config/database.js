@@ -1,14 +1,24 @@
 'use strict';
 
-const { Pool } = require('pg');
+require("dotenv").config();
+const { Pool } = require("pg");
 
 // PostgreSQL connection setup
 const pool = new Pool({
-    user: 'your_username',  // replace with your database username
-    host: 'localhost',       // replace with your database host
-    database: 'your_database',// replace with your database name
-    password: 'your_password',// replace with your database password
-    port: 5432,              // default PostgreSQL port
+  host: process.env.DB_HOST || "localhost",
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASSWORD || "postgres",
+  database: process.env.DB_NAME || "card_clash",
 });
 
-module.exports = { pool };
+pool.on("connect", () => {
+  console.log("Connected to PostgreSQL");
+});
+
+pool.on("error", (err) => {
+  console.error("Unexpected PG error", err);
+  process.exit(-1);
+});
+
+module.exports = pool;
