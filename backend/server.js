@@ -1,18 +1,26 @@
 // Import required modules
 const express = require("express");
 const http = require("http");
+const cors = require("cors");
 const socketIo = require("socket.io");
+const authRoutes = require("./routes/authRoutes");
+const cookieParser = require("cookie-parser");
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-// Database connection (this is just a placeholder; use your actual database connection logic)
-// const mongoose = require('mongoose');
-// mongoose.connect('your_database_uri_here', { useNewUrlParser: true, useUnifiedTopology: true })
-//     .then(() => console.log('Database connected successfully'))
-//     .catch(err => console.error('Database connection error: ', err));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
+
+app.use(express.json());
+app.use(cookieParser());
+app.use("/", authRoutes);
 
 // Basic route for testing
 app.get("/", (req, res) => {
