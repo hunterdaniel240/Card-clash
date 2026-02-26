@@ -29,7 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
-    "app/api/auth/route.js",
     "context/AuthContext.js"
   ],
   "exclude": ["node_modules"]

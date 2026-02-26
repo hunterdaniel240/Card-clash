@@ -3,7 +3,6 @@ const jwt = require("jsonwebtoken");
 // Middleware for verifying the JSON Web Tokens
 const authenticateToken = (req, res, next) => {
   // Retrieve request's token
-  console.log("checking token");
   const token = req.cookies?.token;
   if (!token) {
     return res.status(401).json({ message: "Token not found" }); // Unauthorized

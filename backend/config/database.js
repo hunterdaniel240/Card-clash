@@ -1,15 +1,12 @@
-'use strict';
+"use strict";
 
 require("dotenv").config();
 const { Pool } = require("pg");
 
 // PostgreSQL connection setup
 const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || 5432,
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
-  database: process.env.DB_NAME || "card_clash",
+  connectionString: process.env.DATABASE_URL,
+  ssl: false,
 });
 
 pool.on("connect", () => {
