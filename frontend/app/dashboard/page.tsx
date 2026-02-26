@@ -1,9 +1,14 @@
-import Image from "next/image";
-
-export default function Home() {
+export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-amber-950 font-sans dark:bg-black">
-      dashnoard
+    <div>
+      <h1>Dashboard</h1>
+      <p>Welcome back!</p>
+
+      <ul>
+        <li>Start Game</li>
+        <li>Join Game</li>
+        <li>View Stats</li>
+      </ul>
     </div>
-  );
+  )
 }
