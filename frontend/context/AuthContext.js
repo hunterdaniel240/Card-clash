@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -30,11 +30,34 @@ export function AuthProvider({ children }) {
     checkToken();
   }, []);
 
-  async function login(email, password) {
-    // LOGIN SERVER REQUEST
-    const res = await fetch(process.env.SERVER_URL + "/auth/login", {
+  // REGISTER SERVER REQUEST
+  async function register(name, email, password, role) {
+    const res = await fetch("http://localhost:5000/auth/register", {
       method: "POST",
       credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password, role }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.message || "Registration failed");
+    }
+
+    const data = await res.json();
+    setUser(data.user);
+  }
+
+  // LOGIN SERVER REQUEST
+  async function login(email, password) {
+    const res = await fetch("http://localhost:5000/auth/login", {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         email,
         password,
@@ -44,7 +67,6 @@ export function AuthProvider({ children }) {
     if (!res.ok) {
       throw new Error("Login Failed");
     }
-
     const data = await res.json();
     setUser(data.user);
   }
@@ -66,6 +88,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        register,
       }}
     >
       {children}
@@ -74,5 +97,11 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth not used within AuthProvider");
+  }
+
+  return context;
 }

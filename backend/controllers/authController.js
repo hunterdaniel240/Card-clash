@@ -3,19 +3,22 @@ const { loginUser, registerUser } = require("../services/authService");
 require("dotenv").config({ path: [".env.local"] });
 
 async function loginController(req, res) {
+  console.log(req.body);
   try {
     const { email, password } = req.body;
 
-    const user = await loginUser(email, password);
-    const token = jwt.sign({ id: 1, email: email }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const user = await loginUser({ email, password });
+    if (!req.cookies?.token) {
+      const token = jwt.sign({ id: 1, email: email }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
+      });
 
-    // Set token in cookie
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax",
-    });
+      // Set token in cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
 
     res.json({
       message: "Login successful",
@@ -34,8 +37,8 @@ async function loginController(req, res) {
 async function registerController(req, res) {
   try {
     const { name, email, password, role } = req.body;
-
-    const user = await registerUser(name, email, password, role);
+    console.log(password);
+    const user = await registerUser({ name, email, password, role });
     const token = jwt.sign({ id: 1, email: email }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
