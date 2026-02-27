@@ -1,15 +1,22 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 // Middleware for verifying the JSON Web Tokens
 const authenticateToken = (req, res, next) => {
-    const token = req.headers['authorization'] && req.headers['authorization'].split(' ')[1];
-    if (!token) return res.sendStatus(401); // Unauthorized
+  // Retrieve request's token
+  const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).json({ message: "Token not found" }); // Unauthorized
+  }
 
-    jwt.verify(token, process.env.TOKEN_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403); // Forbidden
-        req.user = user;
-        next(); // Proceed to the next middleware or route handler
-    });
+  // Token was found, check authenticity
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
 };
 
 module.exports = authenticateToken;
