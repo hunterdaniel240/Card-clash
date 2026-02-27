@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import socket from "../socket";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -16,7 +17,8 @@ export default function LoginPage() {
     console.log("Login Attempt:", { email, password });
 
     try {
-      await login(email, password);
+      await login(email, password); // ts error
+      socket.connect();
       router.push("/dashboard");
     } catch (error) {
       alert("Invalid Credentials");

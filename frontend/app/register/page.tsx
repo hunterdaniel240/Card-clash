@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import socket from "../socket";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -22,7 +24,8 @@ export default function RegisterPage() {
     });
 
     try {
-      await register(name, email, password, "student");
+      await register(name, email, password, "student"); // ts error
+      socket.connect();
       router.push("/dashboard");
     } catch (error) {
       alert("Invalid Credentials");
@@ -130,9 +133,12 @@ export default function RegisterPage() {
           {/* Bottom link logic */}
           <div className="border-t-[6px] border-black p-4 bg-black text-white text-center font-bold text-sm uppercase">
             Already a member?{" "}
-            <span className="underline cursor-pointer hover:text-cyan-400 transition-colors">
+            <Link
+              href="/login"
+              className="underline cursor-pointer hover:text-cyan-400 transition-colors"
+            >
               Login here
-            </span>
+            </Link>
           </div>
         </div>
       </div>

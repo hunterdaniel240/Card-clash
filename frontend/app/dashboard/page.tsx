@@ -1,20 +1,33 @@
-"use client"
+"use client";
 
-import React from "react"
+import socket from "../socket";
+import React, { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
 
   // this creates a random pattern of randomly tilted puncuation marks, !, ? and checkmark
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
-    backgroundSize: '400px 400px' 
-  }
+    backgroundSize: "400px 400px",
+  };
 
   const menuItems = [
     { label: "Start Game", color: "bg-green-400" },
     { label: "Join Game", color: "bg-cyan-400" },
     { label: "View Stats", color: "bg-rose-400" },
-  ]
+  ];
+
+  // On initial load, sends signal to server socket
+  useEffect(() => {
+    socket.emit("load-file", user);
+    // You will see two console logs from this because useEffect reloads twice in dev iirc
+
+    return () => {
+      socket.off("load-file", user);
+    };
+  }, []);
 
   return (
     <>
@@ -32,21 +45,21 @@ export default function DashboardPage() {
       `}</style>
 
       <div className="relative flex h-screen items-center justify-center p-4 overflow-hidden animate-bg-flip">
-        
         {/* BACKGROUND LAYER */}
-        <div 
-          className="absolute inset-[-100%] z-0 rotate-[-10deg] pointer-events-none animate-drift" 
+        <div
+          className="absolute inset-[-100%] z-0 rotate-[-10deg] pointer-events-none animate-drift"
           style={punctuationPattern}
         />
 
         {/* Main Dashboard Card */}
         <div className="relative z-10 w-full max-w-[450px] border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
-          
           {/* Header Section */}
           <div className="border-b-[6px] border-black bg-yellow-300 p-8 text-center">
-            <h1 className="text-6xl font-black uppercase italic text-black tracking-tighter">Dashboard</h1>
+            <h1 className="text-6xl font-black uppercase italic text-black tracking-tighter">
+              Dashboard
+            </h1>
             <p className="mt-2 text-3xl font-bold uppercase bg-yellow inline-block px-4 py-1">
-              Welcome back!
+              Welcome back! {user.name}
             </p>
           </div>
 
@@ -59,7 +72,7 @@ export default function DashboardPage() {
               >
                 {item.label}
                 <span className="text-3xl transition-transform group-hover:rotate-12">
-                   {index === 0 ? "!!" : index === 1 ? "✓" : "?"}
+                  {index === 0 ? "!!" : index === 1 ? "✓" : "?"}
                 </span>
               </button>
             ))}
@@ -72,5 +85,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </>
-  )
+  );
 }

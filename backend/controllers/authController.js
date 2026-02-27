@@ -3,7 +3,6 @@ const { loginUser, registerUser } = require("../services/authService");
 require("dotenv").config({ path: [".env.local"] });
 
 async function loginController(req, res) {
-  console.log(req.body);
   try {
     const { email, password } = req.body;
 
@@ -37,7 +36,6 @@ async function loginController(req, res) {
 async function registerController(req, res) {
   try {
     const { name, email, password, role } = req.body;
-    console.log(password);
     const user = await registerUser({ name, email, password, role });
     const token = jwt.sign({ id: 1, email: email }, process.env.JWT_SECRET, {
       expiresIn: "24h",

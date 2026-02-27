@@ -2,16 +2,24 @@
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-const socketIo = require("socket.io");
+const { Server } = require("socket.io");
 const authRoutes = require("./routes/authRoutes");
 const cookieParser = require("cookie-parser");
 const pool = require("./config/database");
 
+const { initSocketServer, getSocketIo } = require("./socket");
+const { TestOn } = require("./socket/on");
+
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
 
+// Initialize SocketIO
+initSocketServer(server);
+
+const io = getSocketIo();
+
+// Only accept localhost for now
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -19,11 +27,13 @@ app.use(
   }),
 );
 
-app.use(express.json());
-app.use(cookieParser());
+app.use(express.json()); // JSON Parsing for the req body
+app.use(cookieParser()); // Cookie parsing for the token
+
+// API Route
 app.use("/", authRoutes);
 
-// Database connection
+// Database connection check
 (async () => {
   try {
     await pool.query("SELECT NOW()");
@@ -33,15 +43,9 @@ app.use("/", authRoutes);
   }
 })();
 
-// Basic route for testing
-app.get("/", (req, res) => {
-  res.json("Welcome to Card Clash!");
-});
-
 // Socket.IO connection
 io.on("connection", (socket) => {
-  console.log("New client connected");
-
+  TestOn(socket);
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
