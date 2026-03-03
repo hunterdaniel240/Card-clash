@@ -21,13 +21,15 @@ export default function DashboardPage() {
 
   // On initial load, sends signal to server socket
   useEffect(() => {
+    if (!user) return;
     socket.emit("load-file", user);
     // You will see two console logs from this because useEffect reloads twice in dev iirc
 
     return () => {
       socket.off("load-file", user);
     };
-  }, []);
+  }, [user]);
+  if (loading) return <p> loading...</p>;
 
   return (
     <>
