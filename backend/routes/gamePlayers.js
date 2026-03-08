@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/gamePlayersController");
+const controller = require("../controllers/gamePlayerController");
 
 router.post("/", controller.addPlayerController);
 router.delete("/:id", controller.removePlayerController);
