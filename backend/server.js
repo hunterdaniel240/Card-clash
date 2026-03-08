@@ -3,10 +3,18 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+
+// Routes
 const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const questionRoutes = require("./routes/questionRoutes");
+const gameRoutes = require("./routes/games");
+const gamePlayersRoutes = require("./routes/gamePlayers");
+const answersRoutes = require("./routes/answers");
+const aiSummaryRoutes = require("./routes/aiSummaries");
+
 const cookieParser = require("cookie-parser");
 const pool = require("./config/database");
-
 const { initSocketServer, getSocketIo } = require("./socket");
 const { TestOn } = require("./socket/on");
 
@@ -32,6 +40,12 @@ app.use(cookieParser()); // Cookie parsing for the token
 
 // API Route
 app.use("/", authRoutes);
+app.use("/users", userRoutes);
+app.use("/questions", questionRoutes);
+app.use("/games", gameRoutes);
+app.use("/gamePlayers", gamePlayersRoutes);
+app.use("/answers", answersRoutes);
+app.use("/aiSummaries", aiSummaryRoutes);
 
 // Database connection check
 (async () => {
