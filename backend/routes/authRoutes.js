@@ -3,17 +3,21 @@ const router = express.Router();
 const {
   loginController,
   registerController,
+  logoutController,
 } = require("../controllers/authController");
 const authenticateToken = require("../middleware/auth");
 
 // Login
-router.post("/auth/login", loginController);
+router.post("/login", loginController);
 
 // Register
-router.post("/auth/register", registerController);
+router.post("/register", registerController);
+
+// logout
+router.post("/logout", logoutController);
 
 // Verify token
-router.get("/auth/me", authenticateToken, (req, res) => {
+router.get("/me", authenticateToken, (req, res) => {
   res.json({ user: req.user });
 });
 

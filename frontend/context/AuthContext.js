@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
     // Send browser's cookie to server to check for a valid token
     async function checkToken() {
       try {
-        const res = await fetch("http://localhost:5000/auth/me", {
+        const res = await fetch("http://localhost:5000/api/auth/me", {
           credentials: "include",
         });
 
@@ -20,7 +20,6 @@ export function AuthProvider({ children }) {
         }
         // No token was found
       } catch (error) {
-        console.log(error);
         setUser(null);
       }
 
@@ -32,7 +31,7 @@ export function AuthProvider({ children }) {
 
   // REGISTER SERVER REQUEST
   async function register(name, email, password, role) {
-    const res = await fetch("http://localhost:5000/auth/register", {
+    const res = await fetch("http://localhost:5000/api/auth/register", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -48,11 +47,13 @@ export function AuthProvider({ children }) {
 
     const data = await res.json();
     setUser(data.user);
+
+    return data.user;
   }
 
   // LOGIN SERVER REQUEST
   async function login(email, password) {
-    const res = await fetch("http://localhost:5000/auth/login", {
+    const res = await fetch("http://localhost:5000/api/auth/login", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -69,16 +70,17 @@ export function AuthProvider({ children }) {
     }
     const data = await res.json();
     setUser(data.user);
+    return data.user;
   }
 
   // LOGOUT SERVER REQUEST
   async function logout() {
-    await fetch(process.env.SERVER_URL + "/auth/logout", {
+    await fetch("http://localhost:5000/api/auth/logout", {
       method: "POST",
       credentials: "include",
     });
-
     setUser(null);
+    setLoading(true);
   }
 
   return (
@@ -86,6 +88,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
+        setLoading,
         login,
         logout,
         register,

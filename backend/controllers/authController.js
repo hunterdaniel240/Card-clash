@@ -60,7 +60,7 @@ async function registerController(req, res) {
       sameSite: "lax",
     });
 
-    res.json({
+    res.status(201).json({
       message: "Registration successful",
       user: user,
     });
@@ -69,7 +69,23 @@ async function registerController(req, res) {
   }
 }
 
+async function logoutController(req, res) {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "lax",
+    });
+
+    res.json({
+      message: "logout successful",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   loginController,
   registerController,
+  logoutController,
 };

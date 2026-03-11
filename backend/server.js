@@ -16,7 +16,11 @@ const aiSummaryRoutes = require("./routes/aiSummaries");
 const cookieParser = require("cookie-parser");
 const pool = require("./config/database");
 const { initSocketServer, getSocketIo } = require("./socket");
-const { TestOn } = require("./socket/on");
+const {
+  CreateGameOn,
+  JoinGameOn,
+  UserDisconnectingOn,
+} = require("./socket/on");
 
 // Initialize Express app
 const app = express();
@@ -39,13 +43,13 @@ app.use(express.json()); // JSON Parsing for the req body
 app.use(cookieParser()); // Cookie parsing for the token
 
 // API Route
-app.use("/", authRoutes);
-app.use("/users", userRoutes);
-app.use("/questions", questionRoutes);
-app.use("/games", gameRoutes);
-app.use("/gamePlayers", gamePlayersRoutes);
-app.use("/answers", answersRoutes);
-app.use("/aiSummaries", aiSummaryRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/games", gameRoutes);
+app.use("/api/gamePlayers", gamePlayersRoutes);
+app.use("/api/answers", answersRoutes);
+app.use("/api/aiSummaries", aiSummaryRoutes);
 
 // Database connection check
 (async () => {
@@ -59,7 +63,9 @@ app.use("/aiSummaries", aiSummaryRoutes);
 
 // Socket.IO connection
 io.on("connection", (socket) => {
-  TestOn(socket);
+  CreateGameOn(socket);
+  JoinGameOn(socket);
+  UserDisconnectingOn(socket);
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });

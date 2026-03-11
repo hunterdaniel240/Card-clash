@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import socket from "../socket";
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, setLoading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -14,12 +14,16 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     console.log("Login Attempt:", { email, password });
 
     try {
-      await login(email, password); // ts error
-      socket.connect();
-      router.push("/dashboard");
+      const user = await login(email, password); // ts error
+      setLoading(false);
+      if (user) {
+        socket.connect();
+        router.push("/dashboard");
+      }
     } catch (error) {
       alert("Invalid Credentials");
     }
