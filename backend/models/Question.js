@@ -9,7 +9,7 @@ async function addQuestion(question) {
     option_b,
     option_c,
     option_d,
-    correct_option
+    correct_option,
   } = question;
 
   const result = await pool.query(
@@ -26,11 +26,24 @@ async function addQuestion(question) {
       option_b,
       option_c,
       option_d,
-      correct_option
-    ]
+      correct_option,
+    ],
   );
 
   return result.rows[0];
+}
+
+// Get Questions created by the teacher
+async function getQuestionsByTeacher(teacher_id) {
+  const result = await pool.query(
+    `SELECT *
+     FROM questions
+     WHERE teacher_id = $1
+     ORDER BY id DESC`,
+    [teacher_id],
+  );
+
+  return result.rows;
 }
 
 // Delete Question
@@ -39,7 +52,7 @@ async function deleteQuestion(id) {
     `DELETE FROM questions
      WHERE id=$1
      RETURNING *`,
-    [id]
+    [id],
   );
 
   return result.rows[0];
@@ -47,5 +60,6 @@ async function deleteQuestion(id) {
 
 module.exports = {
   addQuestion,
-  deleteQuestion
+  deleteQuestion,
+  getQuestionsByTeacher,
 };

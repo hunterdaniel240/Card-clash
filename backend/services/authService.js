@@ -25,7 +25,13 @@ async function loginUser({ email, password }) {
     throw new Error("Invalid Password");
   }
 
-  return user;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    created_at: user.created_at,
+  };
 }
 
 module.exports = {

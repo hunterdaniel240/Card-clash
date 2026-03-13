@@ -3,12 +3,24 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+
+// Routes
 const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const questionRoutes = require("./routes/questionRoutes");
+const gameRoutes = require("./routes/games");
+const gamePlayersRoutes = require("./routes/gamePlayers");
+const answersRoutes = require("./routes/answers");
+const aiSummaryRoutes = require("./routes/aiSummaries");
+
 const cookieParser = require("cookie-parser");
 const pool = require("./config/database");
-
 const { initSocketServer, getSocketIo } = require("./socket");
-const { TestOn } = require("./socket/on");
+const {
+  CreateGameOn,
+  JoinGameOn,
+  UserDisconnectingOn,
+} = require("./socket/on");
 
 // Initialize Express app
 const app = express();
@@ -31,7 +43,13 @@ app.use(express.json()); // JSON Parsing for the req body
 app.use(cookieParser()); // Cookie parsing for the token
 
 // API Route
-app.use("/", authRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/questions", questionRoutes);
+app.use("/api/games", gameRoutes);
+app.use("/api/gamePlayers", gamePlayersRoutes);
+app.use("/api/answers", answersRoutes);
+app.use("/api/aiSummaries", aiSummaryRoutes);
 
 // Database connection check
 (async () => {
@@ -45,7 +63,9 @@ app.use("/", authRoutes);
 
 // Socket.IO connection
 io.on("connection", (socket) => {
-  TestOn(socket);
+  CreateGameOn(socket);
+  JoinGameOn(socket);
+  UserDisconnectingOn(socket);
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });

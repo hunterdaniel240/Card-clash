@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import socket from "../socket";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
+  const { register, setLoading } = useAuth();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -16,6 +16,7 @@ export default function RegisterPage() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    setLoading(true);
     console.log("Register attempt:", {
       name,
       email,
@@ -24,11 +25,14 @@ export default function RegisterPage() {
     });
 
     try {
-      await register(name, email, password, "student"); // ts error
-      socket.connect();
-      router.push("/dashboard");
+      const user = await register(name, email, password, "student"); // ts error
+      setLoading(false);
+      if (user) {
+        socket.connect();
+        router.push("/dashboard");
+      }
     } catch (error) {
-      alert("Invalid Credentials");
+      alert("Something went wrong");
     }
   }
 
@@ -145,3 +149,10 @@ export default function RegisterPage() {
     </>
   );
 }
+/*
+import RegisterEnhanced from "./RegisterEnhanced"
+export default function RegisterPage(){
+    return <RegisterEnhanced />
+}
+
+*/
