@@ -1,11 +1,14 @@
-const { addQuestion, deleteQuestion } = require("../models/Question");
+const {
+  addQuestion,
+  deleteQuestion,
+  getQuestionsByTeacher,
+} = require("../models/Question");
 
 async function createQuestionController(req, res) {
   try {
     const question = await addQuestion(req.body);
 
     res.status(201).json(question);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to create question" });
@@ -24,16 +27,29 @@ async function deleteQuestionController(req, res) {
 
     res.json({
       message: "Question deleted",
-      question: deleted
+      question: deleted,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to delete question" });
   }
 }
 
+async function getQuestionsController(req, res) {
+  try {
+    const { teacher_id } = req.params;
+
+    const questions = await getQuestionsByTeacher(teacher_id);
+
+    res.json(questions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to retrieve questions" });
+  }
+}
+
 module.exports = {
   createQuestionController,
-  deleteQuestionController
+  deleteQuestionController,
+  getQuestionsController,
 };

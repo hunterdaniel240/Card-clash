@@ -2,6 +2,7 @@ const { randomInt } = require("crypto");
 const { createGameSettings } = require("./gameSettings");
 const { Game } = require("./Game");
 const { Player } = require("./Player");
+const { GameUpdate } = require("../socket/emit");
 
 const MAX_SAFE_INT = 2 ** 48 - 1;
 let games = new Map();
@@ -55,6 +56,7 @@ class GameManager {
     ) {
       socket.join(join_code);
       game.addPlayer(new Player(socket.id, name));
+      GameUpdate(join_code, game);
       return game;
     }
 
@@ -71,6 +73,7 @@ class GameManager {
         const player = game.getPlayer(socket.id);
 
         game.removePlayer(player);
+        return game;
       }
     }
   }

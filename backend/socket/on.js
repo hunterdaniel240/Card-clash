@@ -1,4 +1,5 @@
 const { GameManager } = require("../game/gameManager");
+const { getSocketIo } = require;
 
 function CreateGameOn(socket) {
   socket.on("create-game", ({ name, settings, questionIds }, callback) => {

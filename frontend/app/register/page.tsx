@@ -149,3 +149,10 @@ export default function RegisterPage() {
     </>
   );
 }
+/*
+import RegisterEnhanced from "./RegisterEnhanced"
+export default function RegisterPage(){
+    return <RegisterEnhanced />
+}
+
+*/

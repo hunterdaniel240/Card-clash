@@ -38,7 +38,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.push("/dashboard");
+      // router.push("/dashboard");
     }
   }, [user]);
 
@@ -120,3 +120,10 @@ export default function LoginPage() {
     </>
   );
 }
+
+/*
+import LoginEnhanced from "./LoginEnhanced"
+export default function LoginPage(){
+  return <LoginEnhanced />
+}
+  */

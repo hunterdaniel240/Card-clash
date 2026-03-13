@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import socket from "../../socket";
 
 import { useAuth } from "@/context/AuthContext";
@@ -8,9 +8,20 @@ import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const { user, logout, setLoading } = useAuth();
-
+  const [showJoinGameModal, setShowJoinGameModal] = useState(false);
+  const [code, setCode] = useState("");
   const router = useRouter();
-  const { setgameId, setisHost, setSettings, setJoin_code } = useGame();
+  const {
+    setgameId,
+    setisHost,
+    setSettings,
+    setJoin_code,
+    setStatus,
+    setPlayers,
+    setCurrentQuestionIndex,
+    setLeaderboard,
+    setWinners,
+  } = useGame();
 
   // this creates a random pattern of randomly tilted puncuation marks, !, ? and checkmark
   const punctuationPattern = {
@@ -29,6 +40,7 @@ export default function DashboardPage() {
       maxPlayers: 30,
     };
 
+    // TODO handle undefined game returns
     socket.connect();
     socket.emit(
       "create-game",
@@ -44,21 +56,34 @@ export default function DashboardPage() {
         setisHost(true);
         setSettings(game.settings);
         setJoin_code(game.join_code);
+        setStatus(game.status);
+        setPlayers(game.players);
+        setCurrentQuestionIndex(game.currentQuestionIndex);
+        setLeaderboard(game.leaderboard);
+        setWinners(game.winners);
         router.push(`/lobby/${game.join_code}`);
       },
     );
   };
 
-  const handleJoinLobby = () => {
-    if (!user) return;
+  const handleJoinLobby = (e: React.FormEvent) => {
+    //    if (!user) return; //
+    e.preventDefault();
 
     socket.connect();
 
     socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
       setgameId(game.gameId);
-      setisHost(false);
+      setisHost(true);
       setSettings(game.settings);
       setJoin_code(game.join_code);
+      setStatus(game.status);
+      setPlayers(game.players);
+      setCurrentQuestionIndex(game.currentQuestionIndex);
+      setLeaderboard(game.leaderboard);
+      setWinners(game.winners);
+
+      router.push(`/lobby/${game.join_code}`);
     });
   };
 
@@ -72,10 +97,14 @@ export default function DashboardPage() {
     {
       label: "Join Game",
       color: "bg-cyan-400",
-      onClickFunction: () => {
-        console.log("Join Game Selected");
-      },
-      roles: ["student", "teacher"],
+      onClickFunction: () => setShowJoinGameModal(true),
+      roles: ["student"],
+    },
+    {
+      label: "View Questions",
+      color: "bg-cyan-400",
+      onClickFunction: () => router.push("/questions"),
+      roles: ["teacher"],
     },
     {
       label: "View Stats",
@@ -145,15 +174,61 @@ export default function DashboardPage() {
                   <span className="text-3xl transition-transform group-hover:rotate-12">
                     {item.label === "Create Game"
                       ? "!!"
-                      : item.label === "Join Game"
+                      : item.label === "Join Game" ||
+                          item.label === "View Stats"
                         ? "✓"
-                        : item.label === "View Stats"
+                        : item.label === "View Questions"
                           ? "?"
                           : "x"}
                   </span>
                 </button>
               ))}
           </div>
+
+          {showJoinGameModal && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                backgroundColor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                style={{
+                  background: "white",
+                  padding: "20px",
+                  borderRadius: "8px",
+                }}
+              >
+                <h2>Enter Game Code</h2>
+
+                <input
+                  type="text"
+                  placeholder="Game Code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  style={{ marginTop: "10px", marginBottom: "10px" }}
+                />
+
+                <br />
+
+                <button onClick={handleJoinLobby}>Join Lobby</button>
+
+                <button
+                  onClick={() => setShowJoinGameModal(false)}
+                  style={{ marginLeft: "10px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Footer Decor */}
           <div className="border-t-[6px] border-black p-4 bg-black text-white text-center font-black text-sm uppercase tracking-widest">

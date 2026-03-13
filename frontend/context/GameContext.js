@@ -17,8 +17,13 @@ export function GameProvider({ children }) {
     maxPlayers: 30,
   });
   const [join_code, setJoin_code] = useState("");
+  const [players, setPlayers] = useState([]);
   const [status, setStatus] = useState("lobby");
+  const [questions, setQuestions] = useState([]);
+  const [questionsSelected, setQuestionsSelected] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [winners, setWinners] = useState([]);
 
   // missing players, leaderboard, winners
 
@@ -31,12 +36,22 @@ export function GameProvider({ children }) {
         setisHost,
         join_code,
         setJoin_code,
+        players,
+        setPlayers,
         status,
         setStatus,
         settings,
         setSettings,
+        questions,
+        setQuestions,
+        questionsSelected,
+        setQuestionsSelected,
         currentQuestionIndex,
         setCurrentQuestionIndex,
+        leaderboard,
+        setLeaderboard,
+        winners,
+        setWinners,
       }}
     >
       {children}
