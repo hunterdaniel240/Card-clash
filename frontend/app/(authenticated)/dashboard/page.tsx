@@ -46,12 +46,11 @@ export default function DashboardPage() {
       "create-game",
       {
         name: user.name,
+        role: user.role,
         settings: mockSettings,
         questionIds: mockQuestionIds,
       },
       (game) => {
-        console.log("Game created: " + game.gameId + "\n");
-        console.log(JSON.stringify(game));
         setgameId(game.gameId);
         setisHost(true);
         setSettings(game.settings);
@@ -67,24 +66,27 @@ export default function DashboardPage() {
   };
 
   const handleJoinLobby = (e: React.FormEvent) => {
-    //    if (!user) return; //
     e.preventDefault();
 
     socket.connect();
 
-    socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
-      setgameId(game.gameId);
-      setisHost(true);
-      setSettings(game.settings);
-      setJoin_code(game.join_code);
-      setStatus(game.status);
-      setPlayers(game.players);
-      setCurrentQuestionIndex(game.currentQuestionIndex);
-      setLeaderboard(game.leaderboard);
-      setWinners(game.winners);
+    socket.emit(
+      "join-game",
+      { name: user.name, role: user.role, join_code: code },
+      (game) => {
+        setgameId(game.gameId);
+        setisHost(false);
+        setSettings(game.settings);
+        setJoin_code(game.join_code);
+        setStatus(game.status);
+        setPlayers(game.players);
+        setCurrentQuestionIndex(game.currentQuestionIndex);
+        setLeaderboard(game.leaderboard);
+        setWinners(game.winners);
 
-      router.push(`/lobby/${game.join_code}`);
-    });
+        router.push(`/lobby/${game.join_code}`);
+      },
+    );
   };
 
   const menuItems = [

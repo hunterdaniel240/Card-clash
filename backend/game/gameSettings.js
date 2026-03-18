@@ -1,5 +1,5 @@
 function createGameSettings({
-  timePerQuestion = 20,
+  timePerQuestion = 20, // seconds
   shuffleQuestions = true,
   showAnswer = false,
   maxPlayers,
@@ -7,7 +7,6 @@ function createGameSettings({
   return {
     timePerQuestion,
     pointsPerQuestion: 100,
-    speedBonus: 5, // decreasing multiplier
     shuffleQuestions,
     secondsBetweenQuestions: 10,
     showAnswer,

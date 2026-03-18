@@ -2,15 +2,23 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+import { fetchQuestions } from "@/lib/api/questions";
+
 import { GameContext } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import socket from "@/app/socket";
 
+import QuestionSelection from "@/components/QuestionSelection";
+import GameSettingsModal from "@/components/GameSettingsModal";
+
 export default function LobbyPage() {
   const { user } = useAuth();
+  const [showGameSettingsModal, setShowGameSettingsModal] = useState(false);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [questionsSelected, setQuestionsSelected] = useState([]);
+  const [questions, setQuestions] = useState([]);
 
   const {
-    gameId,
     setgameId,
     setisHost,
     settings,
@@ -19,10 +27,9 @@ export default function LobbyPage() {
     join_code,
     players,
     setPlayers,
-    questions,
-    setQuestions,
-    questionsSelected,
-    setQuestionsSelected,
+    setTotalQuestions,
+    setLeaderboard,
+    setWinners,
   } = useContext(GameContext);
 
   const params = useParams();
@@ -33,51 +40,73 @@ export default function LobbyPage() {
     code = params.code;
   }
 
-  const updatePlayerList = (data) => {
-    setPlayers(Array.from(data.players));
+  const handleStartGame = () => {
+    // conditional checks to verify game is ready to start
+    if (questionsSelected.length === 0) {
+      console.log("no questions added, unable to start game");
+      // TODO throw an alert stating game unable to be started.
+      return;
+    }
+
+    if (players.length === 0) {
+      console.log("only host in game. Need atleast 1 student to start");
+      // TODO throw an alert stating game unable to be started.
+
+      return;
+    }
+
+    console.log(questionsSelected);
+    // start game
+    socket.emit("start-game", { join_code, questions: questionsSelected });
   };
 
-  // fetch teacher questions
-  async function fetchQuestions() {
-    if (!user) return;
+  const updateLobbyState = (data) => {
+    setPlayers(Array.from(data.players));
+    setSettings(data.settings);
+    setLeaderboard(data.leaderboard);
+    setWinners(data.winners);
+  };
 
-    const res = await fetch(`http://localhost:5000/api/questions/${user.id}`);
+  // FETCH QUESTIONS
+  const loadQuestions = async () => {
+    if (!user || user.role != "teacher") return;
 
-    const data = await res.json();
+    setQuestionsLoading(true);
+    const data = await fetchQuestions(user.id);
     setQuestions(data);
-  }
+    setQuestionsLoading(false);
+  };
 
   useEffect(() => {
-    if (!join_code && user) {
+    if (!join_code && user && user.role != "teacher") {
       socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
-        if (game) {
-          setgameId(game.gameId);
-          setisHost(false);
-          setSettings(game.settings);
-          setJoin_code(game.join_code);
-        } else {
+        if (!game) {
           router.push("/dashboard");
+          return;
         }
+
+        setgameId(game.gameId);
+        setisHost(false);
+        setSettings(game.settings);
+        setJoin_code(game.join_code);
       });
     }
 
-    socket.on("game-update", updatePlayerList);
-
-    fetchQuestions();
-
-    return () => {
-      socket.off("game-update", updatePlayerList);
-    };
+    loadQuestions();
   }, [user, code]);
 
-  // checkbox handler
-  const handleQuestionToggle = (id) => {
-    if (questionsSelected.includes(id)) {
-      setQuestionsSelected(questionsSelected.filter((q) => q !== id));
-    } else {
-      setQuestionsSelected([...questionsSelected, id]);
-    }
-  };
+  useEffect(() => {
+    socket.on("lobby-update", updateLobbyState);
+    socket.on("game-started", ({ join_code, totalQuestions }) => {
+      setTotalQuestions(totalQuestions);
+      router.push(`/game/${join_code}`);
+    });
+
+    return () => {
+      socket.off("lobby-update", updateLobbyState);
+      socket.off("game-started");
+    };
+  }, []);
 
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
@@ -120,6 +149,9 @@ export default function LobbyPage() {
               <h1 className="text-5xl font-black uppercase italic text-black tracking-tighter">
                 Game Lobby
               </h1>
+              <h2 className="text-2xl font-black uppercase italic text-black ">
+                Join Code: {join_code}
+              </h2>
             </div>
 
             <div className="p-8 space-y-8">
@@ -145,53 +177,46 @@ export default function LobbyPage() {
                   ))}
                 </ul>
               </div>
+              {user?.role === "teacher" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                  <button
+                    className="border-4 border-black bg-white p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    onClick={() => setShowGameSettingsModal(true)}
+                  >
+                    Game Settings
+                  </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                <button className="border-4 border-black bg-white p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none">
-                  Game Settings
-                </button>
-
-                <button className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none">
-                  Start Game
-                </button>
-              </div>
+                  <button
+                    className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    onClick={handleStartGame}
+                  >
+                    Start Game
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* QUESTIONS PANEL */}
-          {user?.role === "teacher" && (
-            <div className="w-[400px] border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
-              <div className="border-b-[6px] border-black bg-yellow-300 p-6 text-center">
-                <h2 className="text-3xl font-black uppercase italic tracking-tight">
-                  Questions
-                </h2>
-              </div>
+          {user?.role === "teacher" ? (
+            <QuestionSelection
+              user={user}
+              questions={questions}
+              questionsSelected={questionsSelected}
+              setQuestionsSelected={setQuestionsSelected}
+              loading={questionsLoading}
+            />
+          ) : null}
 
-              <div className="p-6 space-y-3 max-h-[500px] overflow-y-auto">
-                {questions.length === 0 ? (
-                  <p className="font-black italic uppercase text-center">
-                    No Questions
-                  </p>
-                ) : (
-                  questions.map((q) => (
-                    <label
-                      key={q.id}
-                      className="flex items-start gap-3 border-4 border-black p-3 font-bold cursor-pointer hover:bg-yellow-100"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={questionsSelected.includes(q.id)}
-                        onChange={() => handleQuestionToggle(q.id)}
-                        className="mt-1"
-                      />
-
-                      <span>{q.question_text}</span>
-                    </label>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
+          {showGameSettingsModal ? (
+            <GameSettingsModal
+              setShowGameSettingsModal={setShowGameSettingsModal}
+              setSettings={setSettings}
+              settings={settings}
+              join_code={join_code}
+              socket={socket}
+            />
+          ) : null}
         </div>
       </div>
     </>

@@ -1,12 +1,11 @@
 const { getSocketIo } = require("./index");
 
-function GameUpdate(join_code, gameState) {
-  getSocketIo()
-    .to(join_code)
-    .emit("game-update", {
-      ...gameState,
-      players: Array.from(gameState.players.values()),
-    });
+function LobbyUpdateEmit(join_code, gameState) {
+  getSocketIo().to(join_code).emit("lobby-update", gameState.toDTO());
 }
 
-module.exports = { GameUpdate };
+function LobbyClosedEmit(join_code) {
+  getSocketIo().to(join_code).emit("lobby-closed");
+}
+
+module.exports = { LobbyUpdateEmit };

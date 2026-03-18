@@ -35,17 +35,46 @@ async function deleteQuestionController(req, res) {
   }
 }
 
+// async function getQuestionsController(req, res) {
+//   try {
+//     const { teacher_id } = req.params;
+
+//     const questions = await getQuestionsByTeacher(teacher_id);
+
+//     res.json(questions);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "Failed to retrieve questions" });
+//   }
+// }
+
 async function getQuestionsController(req, res) {
   try {
     const { teacher_id } = req.params;
 
-    const questions = await getQuestionsByTeacher(teacher_id);
+    const rows = await getQuestionsByTeacher(teacher_id);
+    const questions = rows.map(mapQuestionRow);
 
     res.json(questions);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to retrieve questions" });
   }
+}
+
+function mapQuestionRow(row) {
+  return {
+    id: row.id,
+    teacher_id: row.teacher_id,
+    question_text: row.question_text,
+    options: [
+      { id: "A", text: row.option_a },
+      { id: "B", text: row.option_b },
+      { id: "C", text: row.option_c },
+      { id: "D", text: row.option_d },
+    ],
+    correct_option: row.correct_option,
+  };
 }
 
 module.exports = {

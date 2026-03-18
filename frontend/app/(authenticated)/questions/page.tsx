@@ -1,10 +1,11 @@
 "use client";
-<a href=""></a>;
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGame } from "@/context/GameContext";
+
+import { fetchQuestions } from "@/lib/api/questions";
 
 export default function QuestionsPage() {
   const { user } = useAuth();
@@ -22,7 +23,6 @@ export default function QuestionsPage() {
 
   const router = useRouter();
 
-  // TODO: replace with authenticated user id later
   const teacher_id = user.id;
 
   // Maintaining the exact randomized punctuation pattern for visual continuity
@@ -32,27 +32,24 @@ export default function QuestionsPage() {
   };
 
   // FETCH QUESTIONS
-  async function fetchQuestions() {
-    const res = await fetch(
-      `http://localhost:5000/api/questions/${teacher_id}`,
-    );
-    const data = await res.json();
+  const loadQuestions = async () => {
+    const data = await fetchQuestions(teacher_id);
     setQuestions(data);
-  }
+  };
 
   useEffect(() => {
-    fetchQuestions();
+    loadQuestions();
   }, []);
 
-  function handleChange(e) {
+  const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
-  }
+  };
 
   // ADD QUESTION
-  async function handleAddQuestion() {
+  const handleAddQuestion = async () => {
     const payload = {
       teacher_id,
       ...form,
@@ -77,17 +74,17 @@ export default function QuestionsPage() {
       correct_option: "A",
     });
 
-    fetchQuestions();
-  }
+    loadQuestions();
+  };
 
   // DELETE QUESTION
-  async function handleDelete(id) {
+  const handleDelete = async (id) => {
     await fetch(`http://localhost:5000/api/questions/${id}`, {
       method: "DELETE",
     });
 
-    fetchQuestions();
-  }
+    loadQuestions();
+  };
 
   return (
     <>

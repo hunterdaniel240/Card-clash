@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import socket from "@/app/socket";
 
 export const GameContext = createContext(null);
 
@@ -19,13 +20,35 @@ export function GameProvider({ children }) {
   const [join_code, setJoin_code] = useState("");
   const [players, setPlayers] = useState([]);
   const [status, setStatus] = useState("lobby");
-  const [questions, setQuestions] = useState([]);
-  const [questionsSelected, setQuestionsSelected] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [leaderboard, setLeaderboard] = useState([]);
   const [winners, setWinners] = useState([]);
 
-  // missing players, leaderboard, winners
+  const [questionsSummary, setQuestionsSummary] = useState([]);
+
+  const resetContext = () => {
+    setgameId("");
+    setisHost(false);
+    setPlayers([]);
+    setCurrentQuestionIndex(0);
+    setTotalQuestions(0);
+    setQuestionsSummary([]);
+    setLeaderboard([]);
+    setStatus("lobby");
+  };
+
+  useEffect(() => {
+    socket.on("game-reset", () => {
+      console.log("Game reset received");
+
+      resetContext();
+    });
+
+    return () => {
+      socket.off("game-reset");
+    };
+  }, []);
 
   return (
     <GameContext.Provider
@@ -42,16 +65,16 @@ export function GameProvider({ children }) {
         setStatus,
         settings,
         setSettings,
-        questions,
-        setQuestions,
-        questionsSelected,
-        setQuestionsSelected,
         currentQuestionIndex,
         setCurrentQuestionIndex,
+        totalQuestions,
+        setTotalQuestions,
         leaderboard,
         setLeaderboard,
         winners,
         setWinners,
+        questionsSummary,
+        setQuestionsSummary,
       }}
     >
       {children}

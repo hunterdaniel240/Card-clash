@@ -20,6 +20,11 @@ const {
   CreateGameOn,
   JoinGameOn,
   UserDisconnectingOn,
+  UpdateGameSettingsOn,
+  StartGameOn,
+  SubmitAnswerOn,
+  GameReadyOn,
+  ResetGameOn,
 } = require("./socket/on");
 
 // Initialize Express app
@@ -66,6 +71,11 @@ io.on("connection", (socket) => {
   CreateGameOn(socket);
   JoinGameOn(socket);
   UserDisconnectingOn(socket);
+  UpdateGameSettingsOn(socket);
+  StartGameOn(socket);
+  SubmitAnswerOn(socket);
+  GameReadyOn(socket);
+  ResetGameOn(socket);
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
