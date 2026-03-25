@@ -1,8 +1,9 @@
 "use client";
-import { useContext, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useLeaveGame } from "@/lib/hooks/useLeaveGame";
 
-import { GameContext } from "@/context/GameContext";
+import { useGame } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import socket from "@/app/socket";
 
@@ -20,7 +21,7 @@ export default function ActiveGamePage() {
     setLeaderboard,
     setWinners, // TODO
     setQuestionsSummary,
-  } = useContext(GameContext);
+  } = useGame();
   const router = useRouter();
 
   const [question, setQuestion] = useState(null);
@@ -41,14 +42,10 @@ export default function ActiveGamePage() {
     setAnswered(true);
   }
 
-  // // this sets the initial players for first render
-  // useEffect(() => {
-  //   if (players.length > 0) {
-  //     setIngamePlayers(players);
-  //   }
-  // }, [players]);
+  // Handles users trying to leave while game is in progress
+  useLeaveGame({ router, socket, join_code });
 
-  // Handle socket events
+  // Handle gameplay socket events
   useEffect(() => {
     socket.off("question-start");
     socket.off("question-end");
@@ -87,6 +84,7 @@ export default function ActiveGamePage() {
 
       setLeaderboard(data.finalScores);
       setQuestionsSummary(data.questionsSummary);
+      setWinners(data.winners);
 
       router.push(`/game/${join_code}/results`);
     });
@@ -195,7 +193,7 @@ export default function ActiveGamePage() {
                           hover:-translate-x-1 hover:-translate-y-1
                           hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
                           active:translate-x-0 active:translate-y-0 active:shadow-none
-                          ${answered ? "bg-gray-200" : "bg-white"}`}
+                          ${answered ? "bg-gray-500" : "bg-white"}`}
                         >
                           {opt.text}
                         </button>
@@ -207,7 +205,7 @@ export default function ActiveGamePage() {
                 <div className="text-center font-black text-xl">
                   Waiting for next question...
                 </div>
-              ) : gameOver ? (
+              ) : gameOver || currentQuestionIndex == totalQuestions ? (
                 <div className="text-center font-black text-xl">Game Over</div>
               ) : null}
             </div>
@@ -232,6 +230,14 @@ export default function ActiveGamePage() {
               ))}
             </div>
           </div>
+          {process.env.NODE_ENV === "development" && (
+            <button
+              onClick={() => socket.disconnect()}
+              className="bottom-4 right-4 bg-red-500 text-white p-2 text-sm font-black border-2 border-black"
+            >
+              DEBUG: Drop Connection
+            </button>
+          )}
         </div>
       </div>
     </>

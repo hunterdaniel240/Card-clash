@@ -6,6 +6,8 @@ async function runGameLoop(socketIo, game) {
   console.log("initial index : " + game.currentQuestionIndex);
 
   while (game.currentQuestionIndex < game.totalQuestions) {
+    if (game.status !== "in_progress") break; // game was reset or host ended game
+
     // load question
     const question = game.questionsSelected[game.currentQuestionIndex];
 
@@ -41,14 +43,18 @@ async function runGameLoop(socketIo, game) {
   }
 
   game.status = "finished";
+  console.log("game status: " + game.status);
 
   console.log("server finishing game");
   const questionsSummary = game.createQuestionsSummary();
+
+  const winners = game.calculateWinners();
 
   // all questions cleared, send summary and final leaderboard
   socketIo.to(join_code).emit("game-end", {
     finalScores: game.getScores(),
     questionsSummary,
+    winners,
   });
 }
 

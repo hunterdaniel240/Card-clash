@@ -1,6 +1,6 @@
-const { runGameLoop } = require("../game/GameLoop");
+const { runGameLoop } = require("../game/GameEngine");
 const { GameManager } = require("../game/gameManager");
-const { LobbyUpdateEmit } = require("../socket/emit");
+const { LobbyUpdateEmit, LobbyClosedEmit } = require("../socket/emit");
 const { getSocketIo } = require("./index");
 
 function CreateGameOn(socket) {
@@ -41,15 +41,28 @@ function JoinGameOn(socket) {
   });
 }
 
+function LeaveGameOn(socket) {
+  socket.on("leave-game", ({ join_code }) => {
+    console.log("socket leave-game called on server");
+    GameManager.leaveGame(socket, join_code);
+
+    const game = GameManager.getGame(join_code);
+    if (game) {
+      LobbyUpdateEmit(join_code, game);
+    } else {
+      LobbyClosedEmit(join_code);
+    }
+  });
+}
+
 function UpdateGameSettingsOn(socket) {
   socket.on("update-game-settings", ({ join_code, settings }, callback) => {
     let game = GameManager.updateGameSettings(join_code, settings);
-    if (game) {
-      LobbyUpdateEmit(join_code, game);
-      callback(game.toDTO());
-    } else {
-      callback(null);
-    }
+
+    if (!game || game.hostId !== socket.id) return null;
+
+    LobbyUpdateEmit(join_code, game);
+    callback(game.toDTO());
   });
 }
 
@@ -57,7 +70,32 @@ function UpdateGameSettingsOn(socket) {
 function UserDisconnectingOn(socket) {
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      GameManager.leaveGame(socket, room);
+      const game = GameManager.getGame(room);
+      if (!game) return;
+
+      // This function gives host a few seconds to reconnect or if the user is a student then disconnect them
+      if (game.hostId === socket.id) {
+        getSocketIo().to(room).emit("host-disconnected");
+
+        setTimeout(() => {
+          const gone = !getSocketIo().sockets.sockets.get(socket.id);
+          if (gone) {
+            GameManager.leaveGame(socket, room);
+
+            getSocketIo()
+              .to(room)
+              .emit("game-terminated", { reason: "Host has disconnected" });
+          } else {
+            getSocketIo().to(room).emit("host-reconnected");
+          }
+        }, 10000);
+      } else {
+        GameManager.leaveGame(socket, room);
+        const updatedGame = GameManager.getGame(room);
+        if (updatedGame) {
+          LobbyUpdateEmit(room, updatedGame);
+        }
+      }
       console.log("user disconnected from game");
     });
   });
@@ -67,7 +105,7 @@ function StartGameOn(socket) {
   socket.on("start-game", ({ join_code, questions }) => {
     const game = GameManager.startGame(join_code, questions);
 
-    if (!game) return null;
+    if (!game || game.hostId !== socket.id) return null;
 
     getSocketIo().to(join_code).emit("game-started", {
       join_code,
@@ -78,14 +116,13 @@ function StartGameOn(socket) {
 
 function ResetGameOn(socket) {
   socket.on("reset-game", ({ join_code }) => {
-    const game = GameManager.getGame(join_code);
-    if (!game) return;
+    const newGame = GameManager.resetGame(join_code);
 
-    game.resetGame();
+    if (!newGame || newGame.hostId !== socket.id) return null;
 
     // notify ALL clients in lobby
     getSocketIo().to(join_code).emit("game-reset", {
-      status: game.status,
+      game: newGame.toDTO(),
     });
   });
 }
@@ -118,6 +155,7 @@ function SubmitAnswerOn(socket) {
 module.exports = {
   CreateGameOn,
   JoinGameOn,
+  LeaveGameOn,
   UserDisconnectingOn,
   UpdateGameSettingsOn,
   StartGameOn,

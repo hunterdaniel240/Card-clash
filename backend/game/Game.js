@@ -49,6 +49,7 @@ class Game {
 
   removePlayer(player) {
     this.players.delete(player.id);
+    this.readyPlayers.delete(player.id);
   }
 
   updateSettings(settings) {
@@ -113,7 +114,7 @@ class Game {
           player.score += this.settings.pointsPerQuestion; // base points given for correct answer
 
           const answerTime = player.answeredAt - questionStartTime; // answeredAt and question start time is given as ms
-          const remainingTime = Math.max(totalTime - answerTime); // ex 20s in ms - 5s in ms gives 15s in ms
+          const remainingTime = Math.max(0, totalTime - answerTime); // ex 20s in ms - 5s in ms gives 15s in ms
 
           const multipler = remainingTime / totalTime; // ex 15s / 20s = 0.75 multi
           const speedBonus = Math.floor(1000 * multipler);
@@ -196,7 +197,12 @@ class Game {
     }
   }
 
-  resetGame() {
+  calculateWinners() {
+    const allScores = this.getScores().sort((a, b) => b.score - a.score);
+    return allScores.slice(0, 3);
+  }
+
+  resetGameContext() {
     this.status = "lobby";
     this.loopStarted = false;
 
@@ -231,7 +237,7 @@ class Game {
         join_code: this.join_code,
         players: this.getPlayers(),
         status: this.status,
-        currrentQuestionIndex: this.currentQuestionIndex,
+        currentQuestionIndex: this.currentQuestionIndex,
         leaderboard: this.leaderboard,
         winners: this.winners,
       };
@@ -243,6 +249,11 @@ class Game {
         join_code: this.join_code,
         players: this.getPlayers(),
         questionsSelected: this.questionsSelected,
+        status: this.status,
+        currentQuestionIndex: this.currentQuestionIndex,
+        totalQuestions: this.totalQuestions,
+        leaderboard: this.leaderboard,
+        winners: this.winners,
       };
     }
   }

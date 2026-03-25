@@ -1,10 +1,11 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useLeaveGame } from "@/lib/hooks/useLeaveGame";
 
 import { fetchQuestions } from "@/lib/api/questions";
 
-import { GameContext } from "@/context/GameContext";
+import { useGame } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import socket from "@/app/socket";
 
@@ -30,7 +31,8 @@ export default function LobbyPage() {
     setTotalQuestions,
     setLeaderboard,
     setWinners,
-  } = useContext(GameContext);
+    resetContext,
+  } = useGame();
 
   const params = useParams();
   const router = useRouter();
@@ -72,12 +74,25 @@ export default function LobbyPage() {
     if (!user || user.role != "teacher") return;
 
     setQuestionsLoading(true);
-    const data = await fetchQuestions(user.id);
-    setQuestions(data);
+    try {
+      const data = await fetchQuestions(user.id);
+      if (!data) throw new Error("Failed to fetch questions");
+
+      setQuestions(data);
+    } catch (error) {
+      console.log("Loading Questions Error: ", error);
+    }
     setQuestionsLoading(false);
   };
 
+  useLeaveGame({ router, socket, join_code });
+
   useEffect(() => {
+    if (user.role === "teacher" && !join_code) {
+      router.push("/dashboard");
+    }
+
+    // This effect is used if the student refreshes and loses game state
     if (!join_code && user && user.role != "teacher") {
       socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
         if (!game) {
@@ -164,7 +179,11 @@ export default function LobbyPage() {
                   {players.map((player, i) => (
                     <li
                       key={i}
-                      className="flex items-center gap-4 border-4 border-black p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
+                      className={
+                        user.name === player.name
+                          ? "flex items-center gap-4 border-4 border-green-600 p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
+                          : "flex items-center gap-4 border-4 border-black p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
+                      }
                     >
                       <div className="h-10 w-10 border-4 border-black bg-cyan-400 flex items-center justify-center text-lg group-hover:bg-yellow-300 transition-colors">
                         {i + 1}
@@ -192,6 +211,23 @@ export default function LobbyPage() {
                   >
                     Start Game
                   </button>
+                  <button
+                    className="border-4 border-black  p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    onClick={() => {
+                      resetContext();
+                      router.push("/dashboard");
+                    }}
+                  >
+                    Lobby - delete/modify
+                  </button>
+                  {process.env.NODE_ENV === "development" && (
+                    <button
+                      onClick={() => socket.disconnect()}
+                      className="bottom-4 right-4 bg-red-500 text-white p-2 text-sm font-black border-2 border-black"
+                    >
+                      DEBUG: Drop Connection
+                    </button>
+                  )}
                 </div>
               )}
             </div>
