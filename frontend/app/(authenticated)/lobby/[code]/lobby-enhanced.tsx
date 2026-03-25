@@ -101,6 +101,40 @@ export default function LobbyPage() {
     setShowGameSettingsModal(false);
   };
 
+  // START GAME - NEW HANDLER
+  const handleStartGame = () => {
+    // Validate that at least one question is selected
+    if (questionsSelected.length === 0) {
+      alert("Please select at least one question to start the game.");
+      return;
+    }
+
+    // Validate that at least one player is in the lobby (besides the teacher)
+    if (players.length < 2) {
+      alert("At least 2 players are required to start the game.");
+      return;
+    }
+
+    // Emit start-game event with settings and selected questions
+    socket.emit(
+      "start-game",
+      {
+        gameId,
+        settings: gameSettings,
+        questionsSelected,
+      },
+      (response) => {
+        console.log("Game started:", response);
+        if (response && response.success) {
+          // Navigate to game screen
+          router.push(`/game/${join_code}`);
+        } else {
+          alert("Failed to start game. Please try again.");
+        }
+      }
+    );
+  };
+
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
     backgroundSize: "400px 400px",
@@ -176,7 +210,10 @@ export default function LobbyPage() {
                   Game Settings
                 </button>
 
-                <button className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none">
+                <button
+                  onClick={handleStartGame}
+                  className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                >
                   Start Game
                 </button>
               </div>
@@ -218,7 +255,7 @@ export default function LobbyPage() {
             </div>
           )}
 
-          {/* GAME SETTINGS MODAL - NEW */}
+          {/* GAME SETTINGS MODAL - UPDATED */}
           {showGameSettingsModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
               <div className="border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] w-96">
