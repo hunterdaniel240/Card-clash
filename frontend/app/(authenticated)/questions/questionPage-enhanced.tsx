@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useGame } from "@/context/GameContext";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function QuestionsPage() {
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const { questions, setQuestions } = useGame();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
 
   const [form, setForm] = useState({
     question_text: "",
@@ -58,35 +61,67 @@ export default function QuestionsPage() {
       ...form,
     };
 
-    await fetch("http://localhost:5000/api/questions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    setShowModal(false);
+      // ERROR HANDLING - Check for 400 status
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(
+          errorData.message || "Failed to add question. Please try again."
+        );
+        setShowError(true);
+        return;
+      }
 
-    setForm({
-      question_text: "",
-      option_a: "",
-      option_b: "",
-      option_c: "",
-      option_d: "",
-      correct_option: "A",
-    });
+      setShowModal(false);
 
-    fetchQuestions();
+      setForm({
+        question_text: "",
+        option_a: "",
+        option_b: "",
+        option_c: "",
+        option_d: "",
+        correct_option: "A",
+      });
+
+      fetchQuestions();
+    } catch (error) {
+      setErrorMessage("Failed to add question. Please try again.");
+      setShowError(true);
+      console.error("Add question error:", error);
+    }
   }
 
   // DELETE QUESTION
   async function handleDelete(id) {
-    await fetch(`http://localhost:5000/api/questions/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const response = await fetch(`http://localhost:5000/api/questions/${id}`, {
+        method: "DELETE",
+      });
 
-    fetchQuestions();
+      // ERROR HANDLING - Check for 400 status
+      if (!response.ok) {
+        const errorData = await response.json();
+        setErrorMessage(
+          errorData.message || "Failed to delete question. Please try again."
+        );
+        setShowError(true);
+        return;
+      }
+
+      fetchQuestions();
+    } catch (error) {
+      setErrorMessage("Failed to delete question. Please try again.");
+      setShowError(true);
+      console.error("Delete question error:", error);
+    }
   }
 
   return (
@@ -273,6 +308,12 @@ export default function QuestionsPage() {
           </div>
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
