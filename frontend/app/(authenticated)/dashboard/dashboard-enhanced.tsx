@@ -5,12 +5,15 @@ import socket from "../../socket";
 import { useAuth } from "@/context/AuthContext";
 import { useGame } from "@/context/GameContext";
 import { useRouter } from "next/navigation";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function DashboardPage() {
   const { user, logout, setLoading } = useAuth();
   const [showJoinGameModal, setShowJoinGameModal] = useState(false);
   const [showGameSettingsModal, setShowGameSettingsModal] = useState(false);
   const [code, setCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
   const router = useRouter();
   const {
     setgameId,
@@ -57,6 +60,13 @@ export default function DashboardPage() {
         questionIds: mockQuestionIds,
       },
       (game) => {
+        // ERROR HANDLING
+        if (!game) {
+          setErrorMessage("Failed to create game. Please try again.");
+          setShowError(true);
+          return;
+        }
+
         console.log("Game created: " + game.gameId + "\n");
         console.log(JSON.stringify(game));
         setgameId(game.gameId);
@@ -89,6 +99,13 @@ export default function DashboardPage() {
     socket.connect();
 
     socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
+      // ERROR HANDLING
+      if (!game) {
+        setErrorMessage("Failed to join game. Please check the game code and try again.");
+        setShowError(true);
+        return;
+      }
+
       setgameId(game.gameId);
       setisHost(true);
       setSettings(game.settings);
@@ -347,6 +364,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
