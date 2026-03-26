@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import socket from "../socket";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function LoginPage() {
   const { user, login, setLoading } = useAuth();
@@ -11,6 +12,8 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -18,14 +21,20 @@ export default function LoginPage() {
     console.log("Login Attempt:", { email, password });
 
     try {
-      const user = await login(email, password); // ts error
+      const user = await login(email, password);
       setLoading(false);
       if (user) {
         socket.connect();
         router.push("/dashboard");
+      } else {
+        setErrorMessage("Invalid email or password. Please try again.");
+        setShowError(true);
       }
     } catch (error) {
-      alert("Invalid Credentials");
+      setLoading(false);
+      setErrorMessage("Login failed. Please check your credentials and try again.");
+      setShowError(true);
+      console.error("Login error:", error);
     }
   }
 
@@ -112,18 +121,17 @@ export default function LoginPage() {
               type="submit"
               className="w-full border-4 border-black bg-green-400 py-6 text-3xl font-black uppercase text-black transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-2"
             >
-              ENTER <span className="text-4xl"></span>
+              ENTER <span className="text-4xl">→</span>
             </button>
           </form>
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
-
-/*
-import LoginEnhanced from "./LoginEnhanced"
-export default function LoginPage(){
-  return <LoginEnhanced />
-}
-  */
