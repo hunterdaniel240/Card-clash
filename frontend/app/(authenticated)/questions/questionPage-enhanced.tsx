@@ -1,5 +1,4 @@
 "use client";
-<a href=""></a>;
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
