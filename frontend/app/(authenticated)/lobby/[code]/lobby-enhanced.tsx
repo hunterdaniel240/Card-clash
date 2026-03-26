@@ -5,9 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { GameContext } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import socket from "@/app/socket";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function LobbyPage() {
   const { user } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
 
   const {
     gameId,
@@ -83,13 +86,15 @@ export default function LobbyPage() {
   const handleStartGame = () => {
     // Validate that at least one question is selected
     if (questionsSelected.length === 0) {
-      alert("Please select at least one question to start the game.");
+      setErrorMessage("Please select at least one question to start the game.");
+      setShowError(true);
       return;
     }
 
     // Validate that at least one player is in the lobby (besides the teacher)
     if (players.length < 2) {
-      alert("At least 2 players are required to start the game.");
+      setErrorMessage("At least 2 players are required to start the game.");
+      setShowError(true);
       return;
     }
 
@@ -103,12 +108,16 @@ export default function LobbyPage() {
       },
       (response) => {
         console.log("Game started:", response);
-        if (response && response.success) {
-          // Navigate to game screen
-          router.push(`/game/${join_code}`);
-        } else {
-          alert("Failed to start game. Please try again.");
+        
+        // ERROR HANDLING
+        if (!response || !response.success) {
+          setErrorMessage("Failed to start game. Please try again.");
+          setShowError(true);
+          return;
         }
+
+        // Navigate to game screen
+        router.push(`/game/${join_code}`);
       }
     );
   };
@@ -227,6 +236,12 @@ export default function LobbyPage() {
           )}
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
