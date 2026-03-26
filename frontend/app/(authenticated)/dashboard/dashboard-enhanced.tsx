@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function DashboardPage() {
   const { user, logout, setLoading } = useAuth();
   const [showJoinGameModal, setShowJoinGameModal] = useState(false);
+  const [showGameSettingsModal, setShowGameSettingsModal] = useState(false);
   const [code, setCode] = useState("");
   const router = useRouter();
   const {
@@ -23,6 +24,14 @@ export default function DashboardPage() {
     setWinners,
   } = useGame();
 
+  // GAME SETTINGS STATE
+  const [gameSettings, setGameSettings] = useState({
+    timePerQuestion: 20,
+    shuffleQuestions: true,
+    showAnswer: false,
+    maxPlayers: 30,
+  });
+
   // this creates a random pattern of randomly tilted puncuation marks, !, ? and checkmark
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
@@ -30,15 +39,13 @@ export default function DashboardPage() {
   };
 
   const handleCreateLobby = () => {
-    // test settings
-    const mockQuestionIds = ["q1", "q2", "q3", "q4", "q5"];
+    // Open game settings modal instead of directly creating
+    setShowGameSettingsModal(true);
+  };
 
-    const mockSettings = {
-      timePerQuestion: 20,
-      shuffleQuestions: false,
-      showAnswer: false,
-      maxPlayers: 30,
-    };
+  // CONFIRM GAME SETTINGS AND CREATE GAME
+  const handleConfirmGameSettings = () => {
+    const mockQuestionIds = ["q1", "q2", "q3", "q4", "q5"];
 
     // TODO handle undefined game returns
     socket.connect();
@@ -46,7 +53,7 @@ export default function DashboardPage() {
       "create-game",
       {
         name: user.name,
-        settings: mockSettings,
+        settings: gameSettings,
         questionIds: mockQuestionIds,
       },
       (game) => {
@@ -61,9 +68,18 @@ export default function DashboardPage() {
         setCurrentQuestionIndex(game.currentQuestionIndex);
         setLeaderboard(game.leaderboard);
         setWinners(game.winners);
+        setShowGameSettingsModal(false);
         router.push(`/lobby/${game.join_code}`);
       },
     );
+  };
+
+  // Game settings handler
+  const handleGameSettingChange = (field, value) => {
+    setGameSettings({
+      ...gameSettings,
+      [field]: value,
+    });
   };
 
   const handleJoinLobby = (e: React.FormEvent) => {
@@ -185,7 +201,7 @@ export default function DashboardPage() {
               ))}
           </div>
 
-          {/* JOIN GAME MODAL - UPDATED */}
+          {/* JOIN GAME MODAL */}
           {showJoinGameModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
               <div className="border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] w-96">
@@ -219,6 +235,103 @@ export default function DashboardPage() {
 
                   <button
                     onClick={() => setShowJoinGameModal(false)}
+                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GAME SETTINGS MODAL - NEW */}
+          {showGameSettingsModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] w-96">
+                {/* Modal Header */}
+                <div className="border-b-[6px] border-black bg-green-400 p-6 text-center">
+                  <h2 className="text-2xl font-black uppercase italic text-black tracking-tighter">
+                    Game Settings
+                  </h2>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 space-y-5">
+                  {/* Time Per Question */}
+                  <div className="space-y-2 border-4 border-black p-4">
+                    <label className="font-black uppercase text-sm block">
+                      Time Per Question (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      min="5"
+                      max="120"
+                      value={gameSettings.timePerQuestion}
+                      onChange={(e) =>
+                        handleGameSettingChange(
+                          "timePerQuestion",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    />
+                  </div>
+
+                  {/* Max Players */}
+                  <div className="space-y-2 border-4 border-black p-4">
+                    <label className="font-black uppercase text-sm block">
+                      Max Players
+                    </label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="100"
+                      value={gameSettings.maxPlayers}
+                      onChange={(e) =>
+                        handleGameSettingChange("maxPlayers", parseInt(e.target.value))
+                      }
+                      className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    />
+                  </div>
+
+                  {/* Shuffle Questions Checkbox */}
+                  <label className="flex items-center gap-3 border-4 border-black p-4 cursor-pointer font-bold uppercase text-sm hover:bg-green-50 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={gameSettings.shuffleQuestions}
+                      onChange={(e) =>
+                        handleGameSettingChange("shuffleQuestions", e.target.checked)
+                      }
+                      className="w-5 h-5"
+                    />
+                    Shuffle Questions
+                  </label>
+
+                  {/* Show Answer Checkbox */}
+                  <label className="flex items-center gap-3 border-4 border-black p-4 cursor-pointer font-bold uppercase text-sm hover:bg-green-50 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={gameSettings.showAnswer}
+                      onChange={(e) =>
+                        handleGameSettingChange("showAnswer", e.target.checked)
+                      }
+                      className="w-5 h-5"
+                    />
+                    Show Answer
+                  </label>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="border-t-[6px] border-black p-4 space-y-3 bg-white flex gap-3">
+                  <button
+                    onClick={handleConfirmGameSettings}
+                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Create Game
+                  </button>
+
+                  <button
+                    onClick={() => setShowGameSettingsModal(false)}
                     className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   >
                     Cancel
