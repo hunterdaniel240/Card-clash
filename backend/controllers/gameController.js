@@ -1,4 +1,5 @@
 const Game = require("../models/Game"); 
+const gameService = require("../services/gameService");
 
 // Create a new game
 async function createGameController(req, res) {
@@ -34,8 +35,33 @@ async function getAllGamesController(req, res) {
   }
 }
 
+// Get game stats
+async function getGameStatsController(req, res) {
+  const { id } = req.params;
+  const { view } = req.query;
+
+  try {
+    if (view === "teacher") {
+      const data = await gameService.getTeacherStats(id);
+      return res.json(data);
+    }
+
+    if (view === "student") {
+      const playerId = req.user?.id; // make sure auth middleware sets this
+      const data = await gameService.getStudentStats(id, playerId);
+      return res.json(data);
+    }
+
+    return res.status(400).json({ message: "Invalid view type" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch game stats" });
+  }
+}
+
 module.exports = {
   createGameController,
   getGameByIdController,
-  getAllGamesController
+  getAllGamesController,
+  getGameStatsController
 };
