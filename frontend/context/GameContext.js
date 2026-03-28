@@ -27,22 +27,38 @@ export function GameProvider({ children }) {
 
   const [questionsSummary, setQuestionsSummary] = useState([]);
 
-  const resetContext = () => {
-    setgameId("");
-    setisHost(false);
-    setPlayers([]);
-    setCurrentQuestionIndex(0);
-    setTotalQuestions(0);
-    setQuestionsSummary([]);
-    setLeaderboard([]);
-    setStatus("lobby");
+  const resetContext = (game) => {
+    if (game) {
+      console.log("resetting to game values");
+      setgameId("");
+      setPlayers(Array.from(game.players));
+      setCurrentQuestionIndex(game.currentQuestionIndex);
+      setTotalQuestions(game.totalQuestions);
+      setQuestionsSummary([]);
+      setLeaderboard(game.leaderboard);
+      setWinners(game.winners);
+      setJoin_code(game.join_code);
+      setStatus(game.status);
+    } else {
+      console.log("resetting to default values");
+
+      setgameId("");
+      setisHost(false);
+      setPlayers([]);
+      setCurrentQuestionIndex(0);
+      setTotalQuestions(0);
+      setQuestionsSummary([]);
+      setLeaderboard([]);
+      setWinners([]);
+      setJoin_code("");
+      setStatus("lobby");
+    }
   };
 
   useEffect(() => {
-    socket.on("game-reset", () => {
+    socket.on("game-reset", ({ game }) => {
       console.log("Game reset received");
-
-      resetContext();
+      resetContext(game);
     });
 
     return () => {
@@ -75,6 +91,7 @@ export function GameProvider({ children }) {
         setWinners,
         questionsSummary,
         setQuestionsSummary,
+        resetContext,
       }}
     >
       {children}

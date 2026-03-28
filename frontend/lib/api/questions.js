@@ -1,9 +1,13 @@
 export async function fetchQuestions(teacherId) {
-  const res = await fetch(`http://localhost:5000/api/questions/${teacherId}`);
+  try {
+    const res = await fetch(`http://localhost:5000/api/questions/${teacherId}`);
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch questions");
+    if (!res.ok) {
+      throw new Error("Failed to fetch questions");
+    }
+
+    return res.json();
+  } catch (error) {
+    console.log("Failed to fetch questions error: ", error);
   }
-
-  return res.json();
 }

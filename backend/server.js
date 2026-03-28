@@ -19,6 +19,7 @@ const { initSocketServer, getSocketIo } = require("./socket");
 const {
   CreateGameOn,
   JoinGameOn,
+  LeaveGameOn,
   UserDisconnectingOn,
   UpdateGameSettingsOn,
   StartGameOn,
@@ -70,6 +71,7 @@ app.use("/api/aiSummaries", aiSummaryRoutes);
 io.on("connection", (socket) => {
   CreateGameOn(socket);
   JoinGameOn(socket);
+  LeaveGameOn(socket);
   UserDisconnectingOn(socket);
   UpdateGameSettingsOn(socket);
   StartGameOn(socket);

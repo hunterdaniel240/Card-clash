@@ -38,6 +38,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
+      // TODO uncomment later to reroute users already logged in
       // router.push("/dashboard");
     }
   }, [user]);

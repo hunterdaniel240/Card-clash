@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useGame } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ export default function PostGamePage() {
   const {
     join_code,
     questionsSummary,
-    leaderboard,
+    winners,
     setgameId,
     setSettings,
     setJoin_code,
@@ -19,50 +19,70 @@ export default function PostGamePage() {
     setCurrentQuestionIndex,
     setLeaderboard,
     setWinners,
+    resetContext,
   } = useGame();
   const router = useRouter();
-  const hasFetched = useRef(false);
+  const hasFetchedRef = useRef(false);
+  const waitingOnHostRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const [waitingOnHost, setWaitingOnHost] = useState(false);
+
+  const [stickyWinners, setStickyWinners] = useState(winners);
+
+  const setStudentWaiting = (value) => {
+    setWaitingOnHost(value);
+    waitingOnHostRef.current = value;
+  };
 
   const getStudentFeedback = async () => {
-    const res = await fetch("http://localhost:5000/api/aiSummaries/student", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        summary: questionsSummary,
-        studentName: user.name,
-      }),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/api/aiSummaries/student", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summary: questionsSummary,
+          studentName: user.name,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch student feedback");
+
+      const data = await res.json();
+    } catch (error) {
+      console.log("Student feedback error: ", error);
+    }
 
     const data = await res.json();
   };
 
-  useEffect(() => {
-    if (questionsSummary == null || leaderboard == null) return;
-    if (hasFetched.current) return; // prevent a double call in dev/prod
-    hasFetched.current = true;
+  const getTeacherFeedback = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/aiSummaries/teacher", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionsSummary,
+        }),
+      });
 
-    if (user.role == "student") {
-      getStudentFeedback();
+      if (!res.ok) throw new Error("Failed to fetch teacher feedback");
+      const data = await res.json();
+    } catch (error) {
+      console.log("Teacher feedback error: ", error);
     }
-    setLoading(false);
-  }, [questionsSummary, leaderboard, user.role]);
+  };
 
-  const handleBackToLobby = () => {
-    if (user.role === "teacher") {
-      socket.emit("reset-game", { join_code });
-
-      setTimeout(() => {
-        router.push(`/lobby/${join_code}`);
-      }, 200); // small delay
-    } else {
+  const joinLobby = () => {
+    if (!socket.connected) {
       socket.connect();
+    }
 
-      socket.emit(
-        "join-game",
-        { name: user.name, role: user.role, join_code },
-        (game) => {
+    socket.emit(
+      "join-game",
+      { name: user.name, role: user.role, join_code },
+      (game) => {
+        if (game) {
           setgameId(game.gameId);
           setSettings(game.settings);
           setJoin_code(game.join_code);
@@ -73,10 +93,55 @@ export default function PostGamePage() {
           setWinners(game.winners);
 
           router.push(`/lobby/${game.join_code}`);
-        },
-      );
+        } else {
+          if (!waitingOnHostRef.current) return;
+
+          console.log("game not ready");
+
+          setTimeout(() => {
+            joinLobby();
+          }, 3000);
+        }
+      },
+    );
+  };
+
+  const handleBackToLobby = () => {
+    if (user.role === "teacher") {
+      socket.emit("reset-game", { join_code });
+
+      setTimeout(() => {
+        router.push(`/lobby/${join_code}`);
+      }, 200); // small delay
+    } else {
+      setStudentWaiting(true);
+
+      joinLobby();
     }
   };
+
+  const handleBackToDashboard = () => {
+    socket.emit("leave-game", { join_code });
+    resetContext(null);
+    router.push("/dashboard");
+  };
+
+  useEffect(() => {
+    if (questionsSummary == null || winners == null) return;
+    if (hasFetchedRef.current) return; // prevent a double call in dev/prod
+    hasFetchedRef.current = true;
+
+    if (user.role == "student") {
+      getStudentFeedback();
+    } else {
+      getTeacherFeedback();
+    }
+
+    if (!stickyWinners) {
+      setStickyWinners(winners);
+    }
+    setLoading(false);
+  }, [questionsSummary, winners, user.role]);
 
   return (
     <>
@@ -115,8 +180,8 @@ export default function PostGamePage() {
                 <div className="text-center font-black text-xl">
                   Loading scores...
                 </div>
-              ) : leaderboard?.length > 0 ? (
-                leaderboard.map((player, i) => (
+              ) : stickyWinners?.length > 0 ? (
+                stickyWinners.map((player, i) => (
                   <div
                     key={i}
                     className="flex justify-between border-4 border-black p-3 font-black text-lg"
@@ -172,7 +237,44 @@ export default function PostGamePage() {
           >
             Back to Lobby
           </button>
+          <button
+            onClick={handleBackToDashboard}
+            className="mt-3 border-4 border-black bg-white p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+          >
+            Back to dashboard
+          </button>
         </div>
+
+        {/* This modal appears if back to lobby was pressed, but host hasn't reset the game yet */}
+        {waitingOnHost && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-white border-6 border-black p-8 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+              <h2 className="text-2xl font-black uppercase mb-4">
+                Waiting on Host
+              </h2>
+
+              <p className="font-black text-lg">
+                The host has not reset the game yet.
+              </p>
+
+              <p className="mt-2 text-sm">
+                Retrying connection every few seconds...
+              </p>
+
+              <div className="mt-4 animate-pulse font-black">
+                Please wait...
+              </div>
+              <button
+                onClick={() => {
+                  setStudentWaiting(false);
+                }}
+                className="mt-8 border-4 border-black bg-white p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

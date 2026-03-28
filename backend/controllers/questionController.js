@@ -35,19 +35,6 @@ async function deleteQuestionController(req, res) {
   }
 }
 
-// async function getQuestionsController(req, res) {
-//   try {
-//     const { teacher_id } = req.params;
-
-//     const questions = await getQuestionsByTeacher(teacher_id);
-
-//     res.json(questions);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "Failed to retrieve questions" });
-//   }
-// }
-
 async function getQuestionsController(req, res) {
   try {
     const { teacher_id } = req.params;

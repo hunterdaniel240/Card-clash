@@ -5,7 +5,7 @@ function LobbyUpdateEmit(join_code, gameState) {
 }
 
 function LobbyClosedEmit(join_code) {
-  getSocketIo().to(join_code).emit("lobby-closed");
+  getSocketIo().to(join_code).emit("game-terminated", { reason: "host left" });
 }
 
-module.exports = { LobbyUpdateEmit };
+module.exports = { LobbyUpdateEmit, LobbyClosedEmit };

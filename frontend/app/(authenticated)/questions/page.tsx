@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { useGame } from "@/context/GameContext";
 
 import { fetchQuestions } from "@/lib/api/questions";
 
 export default function QuestionsPage() {
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
-  const { questions, setQuestions } = useGame();
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     question_text: "",
@@ -33,12 +33,19 @@ export default function QuestionsPage() {
 
   // FETCH QUESTIONS
   const loadQuestions = async () => {
-    const data = await fetchQuestions(teacher_id);
-    setQuestions(data);
+    console.log("teacher: " + teacher_id);
+    try {
+      const data = await fetchQuestions(teacher_id);
+      if (!data) throw new Error("Failed to load questions");
+      setQuestions(data);
+    } catch (error) {
+      console.log("Loading Questions error: ", error);
+    }
   };
 
   useEffect(() => {
     loadQuestions();
+    setLoading(false);
   }, []);
 
   const handleChange = (e) => {
@@ -54,36 +61,44 @@ export default function QuestionsPage() {
       teacher_id,
       ...form,
     };
+    try {
+      const res = await fetch("http://localhost:5000/api/questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    await fetch("http://localhost:5000/api/questions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      if (!res.ok) throw new Error("Failed to add question");
+      setShowModal(false);
+      setForm({
+        question_text: "",
+        option_a: "",
+        option_b: "",
+        option_c: "",
+        option_d: "",
+        correct_option: "A",
+      });
 
-    setShowModal(false);
-
-    setForm({
-      question_text: "",
-      option_a: "",
-      option_b: "",
-      option_c: "",
-      option_d: "",
-      correct_option: "A",
-    });
-
-    loadQuestions();
+      loadQuestions();
+    } catch (error) {
+      console.log("Adding Question error: ", error);
+    }
   };
 
   // DELETE QUESTION
   const handleDelete = async (id) => {
-    await fetch(`http://localhost:5000/api/questions/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`http://localhost:5000/api/questions/${id}`, {
+        method: "DELETE",
+      });
 
-    loadQuestions();
+      if (!res.ok) throw new Error("Failed to delete question");
+      loadQuestions();
+    } catch (error) {
+      console.log("Deleting Question error: ", error);
+    }
   };
 
   return (
@@ -135,33 +150,41 @@ export default function QuestionsPage() {
               </button>
             </div>
 
-            {/* Questions List Area */}
-            <div className="border-4 border-black p-6 bg-white space-y-4">
-              {questions.length === 0 ? (
-                <p className="font-black uppercase text-2xl italic tracking-tight text-center">
-                  No questions yet.
-                </p>
-              ) : (
-                questions.map((q) => (
-                  <div
-                    key={q.id}
-                    className="border-4 border-black p-4 flex justify-between items-center"
-                  >
-                    <div>
-                      <p className="font-bold">{q.question_text}</p>
-                      <p className="text-sm">Correct: {q.correct_option}</p>
-                    </div>
+            {loading ? (
+              <p className="font-black italic uppercase text-center">
+                Loading Questions
+              </p>
+            ) : (
+              <>
+                {/* Questions List Area */}
+                <div className="border-4 border-black p-6 bg-white space-y-4">
+                  {questions?.length === 0 ? (
+                    <p className="font-black uppercase text-2xl italic tracking-tight text-center">
+                      No questions yet.
+                    </p>
+                  ) : (
+                    questions?.map((q) => (
+                      <div
+                        key={q.id}
+                        className="border-4 border-black p-4 flex justify-between items-center"
+                      >
+                        <div>
+                          <p className="font-bold">{q.question_text}</p>
+                          <p className="text-sm">Correct: {q.correct_option}</p>
+                        </div>
 
-                    <button
-                      onClick={() => handleDelete(q.id)}
-                      className="border-2 border-black px-3 py-1 font-bold bg-red-400"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+                        <button
+                          onClick={() => handleDelete(q.id)}
+                          className="border-2 border-black px-3 py-1 font-bold bg-red-400"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Back to Lobby Link/Button */}
             <div className="pt-4">
