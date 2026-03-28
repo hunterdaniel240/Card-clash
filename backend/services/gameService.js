@@ -3,7 +3,7 @@ const pool = require("../config/database");
 const pool = require("../config/database");
 
 async function getTeacherStats(gameId) {
-  // 🔹 Get all answers + user names
+  // Get all answers + user names
   const answersResult = await pool.query(
     `SELECT 
         a.user_id,
