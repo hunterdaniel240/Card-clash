@@ -1,7 +1,5 @@
 const pool = require("../config/database");
 
-const pool = require("../config/database");
-
 async function getTeacherStats(gameId) {
   // Get all answers + user names
   const answersResult = await pool.query(
@@ -18,7 +16,7 @@ async function getTeacherStats(gameId) {
 
   const answers = answersResult.rows;
 
-  // 🔹 Get player scores
+  // Get player scores
   const scoresResult = await pool.query(
     `SELECT user_id, score
      FROM game_players
