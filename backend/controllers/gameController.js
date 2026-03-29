@@ -42,13 +42,13 @@ async function getGameStatsController(req, res) {
 
   try {
     if (view === "teacher") {
-      const data = await gameService.getTeacherStats(id);
+      const data = await gameService.getTeacherStats(gameId, req.query);
       return res.json(data);
     }
 
     if (view === "student") {
       const playerId = req.user?.id; // make sure auth middleware sets this
-      const data = await gameService.getStudentStats(id, playerId);
+      const data = await gameService.getStudentStats(gameId, userId, req.query);
       return res.json(data);
     }
 
