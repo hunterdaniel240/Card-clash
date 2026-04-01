@@ -26,6 +26,8 @@ export function GameProvider({ children }) {
   const [winners, setWinners] = useState([]);
 
   const [questionsSummary, setQuestionsSummary] = useState([]);
+  const [studentAISummary, setStudentAISummary] = useState("");
+  const [teacherAISummary, setTeacherAISummary] = useState("");
 
   const resetContext = () => {
     setgameId("");
@@ -35,6 +37,8 @@ export function GameProvider({ children }) {
     setTotalQuestions(0);
     setQuestionsSummary([]);
     setLeaderboard([]);
+    setStudentAISummary("");
+    setTeacherAISummary("");
     setStatus("lobby");
   };
 
@@ -72,6 +76,10 @@ export function GameProvider({ children }) {
         leaderboard,
         setLeaderboard,
         winners,
+        studentAISummary,
+        setStudentAISummary,
+        teacherAISummary,
+        setTeacherAISummary,
         setWinners,
         questionsSummary,
         setQuestionsSummary,
