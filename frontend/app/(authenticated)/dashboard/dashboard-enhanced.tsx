@@ -142,9 +142,7 @@ export default function DashboardPage() {
     {
       label: "View Stats",
       color: "bg-purple-400",
-      onClickFunction: () => {
-        console.log("View stats Selected");
-      },
+      onClickFunction: () => router.push("/stats"),
       roles: ["student", "teacher"],
     },
     {
