@@ -31,8 +31,6 @@ export default function DashboardPage() {
 
   const handleCreateLobby = () => {
     // test settings
-    const mockQuestionIds = ["q1", "q2", "q3", "q4", "q5"];
-
     const mockSettings = {
       timePerQuestion: 20,
       shuffleQuestions: false,
@@ -48,7 +46,6 @@ export default function DashboardPage() {
         name: user.name,
         role: user.role,
         settings: mockSettings,
-        questionIds: mockQuestionIds,
       },
       (game) => {
         setgameId(game.gameId);

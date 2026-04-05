@@ -1,7 +1,10 @@
 import { useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 // This hook helps provide alerts to prevent a player/teacher from disconnecting by accident
 export function useLeaveGame({ router, socket, join_code }) {
+  const { user } = useAuth();
+
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       e.preventDefault();

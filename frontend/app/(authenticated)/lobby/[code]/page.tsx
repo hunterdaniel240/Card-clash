@@ -57,7 +57,6 @@ export default function LobbyPage() {
       return;
     }
 
-    console.log(questionsSelected);
     // start game
     socket.emit("start-game", { join_code, questions: questionsSelected });
   };
@@ -110,6 +109,7 @@ export default function LobbyPage() {
     loadQuestions();
   }, [user, code]);
 
+  // socket listeners
   useEffect(() => {
     socket.on("lobby-update", updateLobbyState);
     socket.on("game-started", ({ join_code, totalQuestions }) => {
@@ -215,10 +215,11 @@ export default function LobbyPage() {
                     className="border-4 border-black  p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                     onClick={() => {
                       resetContext();
+                      socket.emit("leave-game", { join_code });
                       router.push("/dashboard");
                     }}
                   >
-                    Lobby - delete/modify
+                    Back to Dashboard
                   </button>
                   {process.env.NODE_ENV === "development" && (
                     <button

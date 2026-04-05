@@ -16,10 +16,12 @@ export function AuthProvider({ children }) {
 
         if (res.ok) {
           const data = await res.json();
+          localStorage.setItem("user", JSON.stringify(data.user)); // adding this for socket usage
           setUser(data.user);
         }
         // No token was found
       } catch (error) {
+        localStorage.removeItem("user");
         setUser(null);
       }
 
@@ -46,6 +48,7 @@ export function AuthProvider({ children }) {
         throw new Error(error.message || "Registration failed");
       }
       const data = await res.json();
+      localStorage.setItem("user", JSON.stringify(data.user)); // adding this for socket usage
       setUser(data.user);
 
       return data.user;
@@ -73,6 +76,7 @@ export function AuthProvider({ children }) {
         throw new Error("Login Failed");
       }
       const data = await res.json();
+      localStorage.setItem("user", JSON.stringify(data.user)); // adding this for socket usage
       setUser(data.user);
       return data.user;
     } catch (error) {
@@ -88,6 +92,7 @@ export function AuthProvider({ children }) {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to log out");
+      localStorage.removeItem("user");
       setUser(null);
       setLoading(true);
     } catch (error) {

@@ -1,13 +1,30 @@
 const GamePlayer = require("../models/GamePlayer");
 
 // Add a player to a game
-async function addPlayerController(req, res) {
+async function addPlayersController(data) {
   try {
-    const player = await GamePlayer.addPlayer(req.body);
-    res.status(201).json(player);
+    // formats as below
+    // ($1, $2), ...
+    const placeholder = [...data.players.values()]
+      .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
+      .join(", ");
+
+    const values = [...data.players.values()].flatMap((player) => [
+      data.gameId,
+      player.userId,
+    ]);
+
+    const gamePlayer_result = await GamePlayer.addPlayers(placeholder, values);
+    console.log(
+      "Game Players Added to DB for " +
+        data.join_code +
+        ": " +
+        gamePlayer_result.rowCount +
+        " added",
+    );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to add player" });
+    return null;
   }
 }
 
@@ -46,8 +63,8 @@ async function updatePlayerScoreController(req, res) {
 }
 
 module.exports = {
-  addPlayerController,
+  addPlayersController,
   removePlayerController,
   getPlayersByGameController,
-  updatePlayerScoreController
+  updatePlayerScoreController,
 };

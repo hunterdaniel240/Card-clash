@@ -47,15 +47,10 @@ export default function ActiveGamePage() {
 
   // Handle gameplay socket events
   useEffect(() => {
-    socket.off("question-start");
-    socket.off("question-end");
-    socket.off("game-end");
-    socket.off("player-answered");
-
-    socket.emit("game-page-ready", { join_code, role: user.role });
+    socket.emit("game-page-ready", { join_code });
 
     socket.on("question-start", (data) => {
-      console.log("received question start socket from server");
+      console.log("question: " + data.question);
       clearInterval(timerRef.current);
       setQuestion(data.question);
       setAnswered(false);

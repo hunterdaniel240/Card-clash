@@ -1,4 +1,12 @@
 import { io } from "socket.io-client";
 
 // intialize socket client
-export default io("http://localhost:5000");
+const socket = io("http://localhost:5000", {
+  autoConnect: false,
+  auth: (callback) => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    callback({ userId: user?.id });
+  },
+});
+
+export default socket;

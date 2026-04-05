@@ -1,9 +1,9 @@
+const { uploadAnswersController } = require("../controllers/answersController");
+
 async function runGameLoop(socketIo, game) {
   const join_code = game.join_code;
   const timeBetweenQuestions = game.settings.secondsBetweenQuestions; // seconds
-
-  console.log("total Questions: " + game.totalQuestions);
-  console.log("initial index : " + game.currentQuestionIndex);
+  let gameLoopActive = true;
 
   while (game.currentQuestionIndex < game.totalQuestions) {
     if (game.status !== "in_progress") break; // game was reset or host ended game
@@ -43,7 +43,15 @@ async function runGameLoop(socketIo, game) {
   }
 
   game.status = "finished";
+  game.completed_previously = true;
   console.log("game status: " + game.status);
+
+  // record all question answers to history
+  const answersDb_result = uploadAnswersController({
+    gameId: game.gameId,
+    join_code: join_code,
+    answerHistory: game.answerHistory,
+  });
 
   console.log("server finishing game");
   const questionsSummary = game.createQuestionsSummary();

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/gamePlayerController");
 
-router.post("/", controller.addPlayerController);
+router.post("/", controller.addPlayersController);
 router.delete("/:id", controller.removePlayerController);
 router.get("/game/:gameId", controller.getPlayersByGameController);
 router.put("/:id/score", controller.updatePlayerScoreController);

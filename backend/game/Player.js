@@ -1,6 +1,7 @@
 class Player {
-  constructor(id, name, role) {
-    this.id = id;
+  constructor(socketId, userId, name, role) {
+    this.socketId = socketId;
+    this.userId = userId;
     this.name = name;
     this.score = 0;
     this.role = role;
@@ -11,7 +12,8 @@ class Player {
 
   toDTO() {
     return {
-      id: this.id,
+      socketId: this.socketId,
+      userId: this.userId,
       name: this.name,
       score: this.score,
     };

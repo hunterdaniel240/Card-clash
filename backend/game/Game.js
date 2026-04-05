@@ -3,7 +3,7 @@ class Game {
     this.gameId = gameId; // db id
     this.settings = settings;
 
-    this.hostId = host.id;
+    this.hostId = host.userId;
     this.join_code = join_code; // socketio id
 
     this.players = new Map();
@@ -14,6 +14,7 @@ class Game {
     this.totalQuestions = 0;
     this.currentQuestionIndex = 0;
     this.playersAnswered = []; // track which players have already answered
+    this.currentAnswers = [];
     this.answerHistory = []; // this will be used for statistics later
 
     this.leaderboard = [];
@@ -22,12 +23,13 @@ class Game {
     this.readyPlayers = new Set();
 
     this.created_At = new Date();
+    this.completed_previously = false;
 
-    this.players.set(host.id, host); // host is added to help ensure all clients are in sync, but isn't part of the leaderboard
+    this.players.set(host.userId, host); // host is added to help ensure all clients are in sync, but isn't part of the leaderboard
   }
 
   addPlayer(player) {
-    this.players.set(player.id, player);
+    this.players.set(player.userId, player);
   }
 
   getPlayer(playerId) {
@@ -39,7 +41,7 @@ class Game {
     return Array.from(this.players.values())
       .filter((p) => p.role !== "teacher")
       .map((p) => ({
-        id: p.id,
+        userID: p.userId,
         name: p.name,
         score: p.score,
         answer: p.answer,
@@ -48,8 +50,8 @@ class Game {
   }
 
   removePlayer(player) {
-    this.players.delete(player.id);
-    this.readyPlayers.delete(player.id);
+    this.players.delete(player.userId);
+    this.readyPlayers.delete(player.userId);
   }
 
   updateSettings(settings) {
@@ -144,7 +146,7 @@ class Game {
         players: history
           ? history.answers
               .filter((p) => {
-                const player = this.players.get(p.playerId);
+                const player = this.players.get(p.userId);
                 return player && player.role !== "teacher";
               })
               .map((p) => ({
@@ -164,12 +166,14 @@ class Game {
     const question = this.questionsSelected[this.currentQuestionIndex];
     const answers = [];
 
+    console.log("players length: " + this.players.size);
     for (const player of this.players.values()) {
       answers.push({
-        playerId: player.id,
+        userId: player.userId,
         name: player.name,
         answer: player.answer,
         isCorrect: player.answer === question.correct_option,
+        answered_at: player.answered_at,
       });
     }
 
@@ -220,15 +224,6 @@ class Game {
   }
 
   toDTO() {
-    let players = [];
-    this.players.forEach((player, playerId) => {
-      players.push({
-        ...player.toDTO(),
-      });
-    });
-
-    // originally planned on sending whole game back each time, each gameplay server emit is only sending smaller portions.
-    // needs further testing to determine if its better to send game config back each time
     if (this.status == "in_progress") {
       return {
         gameId: this.gameId,

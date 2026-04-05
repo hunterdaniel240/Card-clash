@@ -1,13 +1,44 @@
 const Answer = require("../models/Answer");
 
 // Submit an answer
-async function submitAnswerController(req, res) {
+async function uploadAnswersController(data) {
   try {
-    const answer = await Answer.submitAnswer(req.body);
-    res.status(201).json(answer);
+    // formats as below
+    // ($1, $2, $3, $4, $5, $6), ...
+    const placeholder = data.answerHistory
+      .map(
+        (_, i) =>
+          `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`,
+      )
+      .join(", ");
+
+    const values = data.answerHistory.flatMap((question) =>
+      question.answers.flatMap((answer) => [
+        data.gameId,
+        question.questionId,
+        answer.userId,
+        answer.selected_option,
+        answer.isCorrect,
+        answer.answered_at,
+      ]),
+    );
+
+    console.log("answer values: " + values);
+
+    // Inserts into game_questions table
+    const answers_result = await Answer.submitAnswers(placeholder, values);
+    console.log(
+      "Answers Added to DB for " +
+        data.join_code +
+        ": " +
+        answers_result.rowCount +
+        " added",
+    );
+
+    return answers_result;
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to submit answer" });
+    return null;
   }
 }
 
@@ -34,7 +65,7 @@ async function getAnswersByUserController(req, res) {
 }
 
 module.exports = {
-  submitAnswerController,
+  uploadAnswersController,
   getAnswersByGameController,
-  getAnswersByUserController
+  getAnswersByUserController,
 };

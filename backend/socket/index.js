@@ -9,6 +9,13 @@ function initSocketServer(httpServer) {
       credentials: true,
     },
   });
+
+  io.use((socket, next) => {
+    const userId = socket.handshake.auth.userId;
+    if (!userId) return next(new Error("No user ID provided"));
+    socket.userId = userId;
+    next();
+  });
 }
 
 function getSocketIo() {

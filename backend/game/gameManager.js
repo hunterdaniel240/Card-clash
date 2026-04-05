@@ -2,7 +2,16 @@ const { randomInt } = require("crypto");
 const { createGameSettings } = require("./gameSettings");
 const { Game } = require("./Game");
 const { Player } = require("./Player");
-const { getSocketIo } = require("../socket");
+
+// db game
+const {
+  createGameController,
+  deleteGameController,
+  endGameController,
+} = require("../controllers/gameController");
+
+// db gameplayers
+const { addPlayersController } = require("../controllers/gamePlayerController");
 
 const MAX_SAFE_INT = 2 ** 48 - 1;
 let games = new Map();
@@ -15,7 +24,7 @@ function generateGameCode(length) {
 }
 
 class GameManager {
-  static createGame(socket, name, role, settingsData, questionIds) {
+  static createGame(socket, name, role, settingsData) {
     // generate game info
     let join_code;
 
@@ -24,25 +33,30 @@ class GameManager {
       join_code = generateGameCode(6);
     } while (games.has(join_code));
 
-    const host = new Player(socket.id, name, role);
+    const host = new Player(socket.socketId, socket.userId, name, role);
     const settings = createGameSettings(settingsData);
     const gameId = crypto.randomUUID(); // this is to store in DB, join_code is used primarily for socketIO
 
     // initialize game
-    const game = new Game(gameId, join_code, settings, host, questionIds);
-
-    console.log(game.players);
+    const game = new Game(gameId, join_code, settings, host);
 
     games.set(join_code, game);
 
     return game;
   }
 
-  static deleteGame(socket, join_code) {
+  static deleteGame(userId, join_code) {
     const game = games.get(join_code);
 
-    if (game && game.hostId === socket.id) {
+    if (game && game.hostId === userId) {
       games.delete(join_code);
+
+      // host left, but game never started
+      if (game.status == "lobby") {
+        const deletedGame = deleteGameController(game.gameId);
+        console.log("deleted game: " + deletedGame);
+        console.log("game deleted from DB");
+      }
     }
   }
 
@@ -57,23 +71,25 @@ class GameManager {
     if (
       game &&
       game.status == "lobby" &&
-      game.players.size < game.settings.maxPlayers
+      game.players.size < game.settings.maxPlayers &&
+      !game.players.has({ userId: socket.userId })
     ) {
-      game.addPlayer(new Player(socket.id, name, role));
+      console.log("adding player: " + game.players.size);
+      game.addPlayer(new Player(socket.socketId, socket.userId, name, role));
       return game;
     }
 
     // TODO handle failed to join game gracefully
   }
 
-  static leaveGame(socket, join_code) {
+  static leaveGame(userId, join_code) {
     const game = games.get(join_code);
     if (!game) return null;
 
-    if (game.hostId === socket.id) {
-      GameManager.deleteGame(socket, join_code);
+    if (game.hostId === userId) {
+      GameManager.deleteGame(userId, join_code);
     } else {
-      const player = game.getPlayer(socket.id);
+      const player = game.getPlayer(userId);
       if (!player) return null;
 
       game.removePlayer(player);
@@ -97,7 +113,7 @@ class GameManager {
     return game;
   }
 
-  static startGame(join_code, questions) {
+  static async startGame(join_code, questions) {
     const game = games.get(join_code);
     if (!game) return null; // error occured with finding current game
 
@@ -108,7 +124,53 @@ class GameManager {
     game.status = "in_progress";
     game.currentQuestionIndex = 0;
 
+    if (game.completed_previously) {
+      game.gameId = crypto.randomUUID();
+    }
+
+    // insert game config into db
+    const dbGame = await createGameController({
+      gameId: game.gameId,
+      host_id: game.hostId,
+      join_code: game.join_code,
+      status: game.status,
+      selected_questions: game.questionsSelected,
+    });
+
+    if (!dbGame) {
+      console.log("Failed to add game to the DB.");
+      GameManager.deleteGame(socket.userId, join_code);
+      return null;
+    }
+    console.log("Added game to DB");
+
+    const dbGamePlayers = await addPlayersController({
+      gameId: game.gameId,
+      join_code: join_code, // just used for logging
+      players: game.players,
+    });
+
     return game;
+  }
+
+  static endGame(game) {
+    game.status = "finished";
+    game.ended_at = Date.now();
+    console.log("Server game status: " + game.status);
+
+    const questionsSummary = game.createQuestionsSummary();
+    const winners = game.calculateWinners();
+
+    const dbGame = endGameController({
+      gameId: game.gameId,
+      status: game.status,
+      ended_at: game.ended_at,
+    });
+
+    return {
+      questionsSummary,
+      winners,
+    };
   }
 
   static submitAnswer(playerId, join_code, answer) {
@@ -124,6 +186,8 @@ class GameManager {
 
     return game;
   }
+
+  static recordAnswers() {}
 }
 
 module.exports = { GameManager };
