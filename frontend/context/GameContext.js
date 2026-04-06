@@ -26,6 +26,8 @@ export function GameProvider({ children }) {
   const [winners, setWinners] = useState([]);
 
   const [questionsSummary, setQuestionsSummary] = useState([]);
+  const [studentAISummary, setStudentAISummary] = useState("");
+  const [teacherAISummary, setTeacherAISummary] = useState("");
 
   const resetContext = (game) => {
     if (game) {
@@ -88,6 +90,10 @@ export function GameProvider({ children }) {
         leaderboard,
         setLeaderboard,
         winners,
+        studentAISummary,
+        setStudentAISummary,
+        teacherAISummary,
+        setTeacherAISummary,
         setWinners,
         questionsSummary,
         setQuestionsSummary,

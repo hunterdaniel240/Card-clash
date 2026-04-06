@@ -20,12 +20,18 @@ export default function PostGamePage() {
     setLeaderboard,
     setWinners,
     resetContext,
+    studentAISummary,
+    setStudentAISummary,
+    teacherAISummary,
+    setTeacherAISummary,
   } = useGame();
   const router = useRouter();
   const hasFetchedRef = useRef(false);
   const waitingOnHostRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [waitingOnHost, setWaitingOnHost] = useState(false);
 
   const [stickyWinners, setStickyWinners] = useState(winners);
@@ -49,12 +55,13 @@ export default function PostGamePage() {
       if (!res.ok) throw new Error("Failed to fetch student feedback");
 
       const data = await res.json();
-    } catch (error) {
-      console.log("Student feedback error: ", error);
+      setStudentAISummary(data.summary || "");
+    } catch (err) {
+      console.error("Error fetching student feedback:", err);
+      setError("Could not load student feedback");
     }
-
-    const data = await res.json();
   };
+
 
   const getTeacherFeedback = async () => {
     try {
@@ -68,8 +75,19 @@ export default function PostGamePage() {
 
       if (!res.ok) throw new Error("Failed to fetch teacher feedback");
       const data = await res.json();
+      setTeacherAISummary(data.summary || "");
     } catch (error) {
-      console.log("Teacher feedback error: ", error);
+      console.error("Error fetching teacher feedback:", err);
+      setError("Could not load teacher feedback")
+  useEffect(() => {
+    if (questionsSummary == null || leaderboard == null) return;
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
+    if (user.role === "student") {
+      getStudentFeedback();
+    } else if (user.role === "teacher") {
+      getTeacherFeedback();
     }
   };
 
@@ -165,11 +183,12 @@ export default function PostGamePage() {
             backgroundSize: "400px 400px",
           }}
         />
-        <div className="z-10 flex flex-col max-h-screen items-center">
+        <div className="z-10 flex flex-col max-h-screen items-center overflow-y-auto pb-8">
           <h1 className="text-5xl font-black uppercase mb-8">Game Over</h1>
 
-          <div className="w-full max-w-[700px] border-6 border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
-            <div className="border-b-6 border-black bg-cyan-400 p-6 text-center">
+          {/* Final Scores */}
+          <div className="w-full max-w-[700px] border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+            <div className="border-b-[6px] border-black bg-cyan-400 p-6 text-center">
               <h2 className="text-3xl font-black uppercase italic">
                 Final Scores
               </h2>
@@ -198,16 +217,47 @@ export default function PostGamePage() {
             </div>
           </div>
 
-          {/* Teacher detailed summary */}
-          {user.role === "teacher" && questionsSummary.length > 0 && (
-            <div className="w-full max-w-[700px] mt-8 border-6 border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
-              <div className="border-b-6 border-black bg-yellow-300 p-6 text-center">
+          {/* Teacher AI Summary */}
+          {user.role === "teacher" && (
+            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+              <div className="border-b-[6px] border-black bg-purple-400 p-6 text-center">
                 <h2 className="text-3xl font-black uppercase italic">
-                  Question Summary
+                  Teacher AI Summary
                 </h2>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center font-black text-lg">
+                    Generating AI summary...
+                  </div>
+                ) : error ? (
+                  <div className="text-center font-black text-lg text-red-600">
+                    {error}
+                  </div>
+                ) : teacherAISummary ? (
+                  <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                    {teacherAISummary}
+                  </p>
+                ) : (
+                  <div className="text-center font-black text-lg">
+                    No summary available
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Question Summary (Teacher Only) */}
+          {user.role === "teacher" && questionsSummary.length > 0 && (
+            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+              <div className="border-b-[6px] border-black bg-yellow-300 p-6 text-center">
+                <h2 className="text-3xl font-black uppercase italic">
+                  Question Breakdown
+                </h2>
+              </div>
+
+              <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto">
                 {questionsSummary.map((q, i) => (
                   <div key={i} className="border-4 border-black p-4">
                     <h3 className="font-black text-xl mb-2">
@@ -231,9 +281,40 @@ export default function PostGamePage() {
             </div>
           )}
 
+          {/* Student AI Summary */}
+          {user.role === "student" && (
+            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+              <div className="border-b-[6px] border-black bg-green-400 p-6 text-center">
+                <h2 className="text-3xl font-black uppercase italic">
+                  Student AI Feedback
+                </h2>
+              </div>
+
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center font-black text-lg">
+                    Generating personalized feedback...
+                  </div>
+                ) : error ? (
+                  <div className="text-center font-black text-lg text-red-600">
+                    {error}
+                  </div>
+                ) : studentAISummary ? (
+                  <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                    {studentAISummary}
+                  </p>
+                ) : (
+                  <div className="text-center font-black text-lg">
+                    No feedback available
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleBackToLobby}
-            className="mt-8 border-4 border-black bg-white p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            className="mt-8 border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
           >
             Back to Lobby
           </button>

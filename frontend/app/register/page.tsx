@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import socket from "../socket";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function RegisterPage() {
   const { register, setLoading } = useAuth();
@@ -13,6 +14,8 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -25,14 +28,22 @@ export default function RegisterPage() {
     });
 
     try {
-      const user = await register(name, email, password, "student"); // ts error
+      const user = await register(name, email, password, "student");
       setLoading(false);
       if (user) {
         socket.connect();
         router.push("/dashboard");
+      } else {
+        setErrorMessage("Registration failed. Please try again.");
+        setShowError(true);
       }
     } catch (error) {
-      alert("Something went wrong");
+      setLoading(false);
+      setErrorMessage(
+        "Registration failed. Please check your information and try again."
+      );
+      setShowError(true);
+      console.error("Register error:", error);
     }
   }
 
@@ -130,7 +141,7 @@ export default function RegisterPage() {
               type="submit"
               className="w-full border-4 border-black bg-yellow-300 mt-4 py-5 text-2xl font-black uppercase text-black transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-3"
             >
-              Create Account <span className="text-3xl"></span>
+              Create Account <span className="text-3xl">→</span>
             </button>
           </form>
 
@@ -146,13 +157,12 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
-/*
-import RegisterEnhanced from "./RegisterEnhanced"
-export default function RegisterPage(){
-    return <RegisterEnhanced />
-}
-
-*/
