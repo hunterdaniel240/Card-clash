@@ -34,6 +34,8 @@ function JoinGameOn(socket) {
 
 function LeaveGameOn(socket) {
   socket.on("leave-game", ({ join_code }) => {
+    console.log("socket.userId:", socket.userId); // 👈 add this
+
     console.log("socket leave-game called on server");
     GameManager.leaveGame(socket.userId, join_code);
 

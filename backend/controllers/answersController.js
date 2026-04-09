@@ -3,17 +3,8 @@ const Answer = require("../models/Answer");
 // Submit an answer
 async function uploadAnswersController(data) {
   try {
-    // formats as below
-    // ($1, $2, $3, $4, $5, $6), ...
-    const placeholder = data.answerHistory
-      .map(
-        (_, i) =>
-          `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`,
-      )
-      .join(", ");
-
-    const values = data.answerHistory.flatMap((question) =>
-      question.answers.flatMap((answer) => [
+    const rows = data.answerHistory.flatMap((question) =>
+      question.answers.map((answer) => [
         data.gameId,
         question.questionId,
         answer.userId,
@@ -23,7 +14,16 @@ async function uploadAnswersController(data) {
       ]),
     );
 
-    console.log("answer values: " + values);
+    // formats as below
+    // ($1, $2, $3, $4, $5, $6), ...
+    const placeholder = rows
+      .map(
+        (_, i) =>
+          `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`,
+      )
+      .join(", ");
+
+    const values = rows.flat();
 
     // Inserts into game_questions table
     const answers_result = await Answer.submitAnswers(placeholder, values);

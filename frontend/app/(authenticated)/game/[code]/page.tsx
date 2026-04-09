@@ -25,6 +25,10 @@ export default function ActiveGamePage() {
   const router = useRouter();
 
   const [question, setQuestion] = useState(null);
+  const [correctAnswer, setCorrectAnswer] = useState({
+    text: "",
+    option: "",
+  });
   const [timeLeft, setTimeLeft] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [answeredPlayers, setAnsweredPlayers] = useState([]);
@@ -65,6 +69,10 @@ export default function ActiveGamePage() {
       console.log("question ended: " + JSON.stringify(data));
       clearInterval(timerRef.current);
       setLeaderboard(data.scores);
+      setCorrectAnswer({
+        text: data.correctAnswer.text,
+        option: data.correctAnswer.option,
+      });
       setQuestion(null);
       setWaiting(true);
       setTimeLeft(TIME_BETWEEN_QUESTIONS); // countdown between questions
@@ -95,7 +103,7 @@ export default function ActiveGamePage() {
       socket.off("game-end");
       socket.off("player-answered");
     };
-  }, [join_code]);
+  }, []);
 
   // Client Timer, timeLeft is set by server emit
   useEffect(() => {
@@ -197,9 +205,17 @@ export default function ActiveGamePage() {
                   )}
                 </>
               ) : waiting ? (
-                <div className="text-center font-black text-xl">
-                  Waiting for next question...
-                </div>
+                <>
+                  {settings.showAnswer && (
+                    <p className="text-center font-black text-xl">
+                      Correct answer was {correctAnswer.option}:{" "}
+                      {correctAnswer.text}
+                    </p>
+                  )}
+                  <div className="text-center font-black text-xl">
+                    Waiting for next question...
+                  </div>
+                </>
               ) : gameOver || currentQuestionIndex == totalQuestions ? (
                 <div className="text-center font-black text-xl">Game Over</div>
               ) : null}

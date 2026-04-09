@@ -11,6 +11,7 @@ import socket from "@/app/socket";
 
 import QuestionSelection from "@/components/QuestionSelection";
 import GameSettingsModal from "@/components/GameSettingsModal";
+import ErrorAlert from "@/components/ErrorAlert";
 
 export default function LobbyPage() {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ export default function LobbyPage() {
   const [questionsLoading, setQuestionsLoading] = useState(true);
   const [questionsSelected, setQuestionsSelected] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
 
   const {
     setgameId,
@@ -37,37 +40,6 @@ export default function LobbyPage() {
   const params = useParams();
   const router = useRouter();
 
-  let code;
-  if (!join_code) {
-    code = params.code;
-  }
-
-  const handleStartGame = () => {
-    // conditional checks to verify game is ready to start
-    if (questionsSelected.length === 0) {
-      console.log("no questions added, unable to start game");
-      // TODO throw an alert stating game unable to be started.
-      return;
-    }
-
-    if (players.length === 0) {
-      console.log("only host in game. Need atleast 1 student to start");
-      // TODO throw an alert stating game unable to be started.
-
-      return;
-    }
-
-    // start game
-    socket.emit("start-game", { join_code, questions: questionsSelected });
-  };
-
-  const updateLobbyState = (data) => {
-    setPlayers(Array.from(data.players));
-    setSettings(data.settings);
-    setLeaderboard(data.leaderboard);
-    setWinners(data.winners);
-  };
-
   // FETCH QUESTIONS
   const loadQuestions = async () => {
     if (!user || user.role != "teacher") return;
@@ -86,31 +58,51 @@ export default function LobbyPage() {
 
   useLeaveGame({ router, socket, join_code });
 
+  // redirects if teacher loses state
   useEffect(() => {
-    if (user.role === "teacher" && !join_code) {
+    if (user?.role === "teacher" && !join_code) {
       router.push("/dashboard");
     }
+  }, [user, join_code]);
 
-    // This effect is used if the student refreshes and loses game state
-    if (!join_code && user && user.role != "teacher") {
-      socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
-        if (!game) {
-          router.push("/dashboard");
-          return;
-        }
+  // loading questions when teacher loads
+  useEffect(() => {
+    loadQuestions();
+  }, [user]);
 
-        setgameId(game.gameId);
-        setisHost(false);
-        setSettings(game.settings);
-        setJoin_code(game.join_code);
-      });
+  // student redirect recovery
+  useEffect(() => {
+    if (!user || user.role === "teacher") return;
+    if (join_code) return; // state wasn't lost
+
+    const code = params.code;
+    if (!code) {
+      router.push("/dashboard");
+      return;
     }
 
-    loadQuestions();
-  }, [user, code]);
+    socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
+      if (!game) {
+        router.push("/dashboard");
+        return;
+      }
+
+      setgameId(game.gameId);
+      setisHost(false);
+      setSettings(game.settings);
+      setJoin_code(game.join_code);
+    });
+  }, []);
 
   // socket listeners
   useEffect(() => {
+    const updateLobbyState = (data) => {
+      setPlayers(Array.from(data.players));
+      setSettings(data.settings);
+      setLeaderboard(data.leaderboard);
+      setWinners(data.winners);
+    };
+
     socket.on("lobby-update", updateLobbyState);
     socket.on("game-started", ({ join_code, totalQuestions }) => {
       setTotalQuestions(totalQuestions);
@@ -122,6 +114,27 @@ export default function LobbyPage() {
       socket.off("game-started");
     };
   }, []);
+
+  const handleStartGame = () => {
+    // conditional checks to verify game is ready to start
+    if (questionsSelected.length === 0) {
+      console.log("no questions added, unable to start game");
+      setErrorMessage("Please select at least one question to start the game.");
+      setShowError(true);
+      return;
+    }
+
+    if (players.length === 0) {
+      // TODO: change this to be more than 2 players: length > 1 as teacher isn't pulled
+      console.log("only host in game. Need atleast 1 student to start");
+      setErrorMessage("At least 2 players are required to start the game.");
+      setShowError(true);
+      return;
+    }
+
+    // start game
+    socket.emit("start-game", { join_code, questions: questionsSelected });
+  };
 
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
@@ -196,41 +209,37 @@ export default function LobbyPage() {
                   ))}
                 </ul>
               </div>
-              {user?.role === "teacher" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                  <button
-                    className="border-4 border-black bg-white p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
-                    onClick={() => setShowGameSettingsModal(true)}
-                  >
-                    Game Settings
-                  </button>
 
-                  <button
-                    className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
-                    onClick={handleStartGame}
-                  >
-                    Start Game
-                  </button>
-                  <button
-                    className="border-4 border-black  p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
-                    onClick={() => {
-                      resetContext();
-                      socket.emit("leave-game", { join_code });
-                      router.push("/dashboard");
-                    }}
-                  >
-                    Back to Dashboard
-                  </button>
-                  {process.env.NODE_ENV === "development" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                {user?.role === "teacher" && (
+                  <>
                     <button
-                      onClick={() => socket.disconnect()}
-                      className="bottom-4 right-4 bg-red-500 text-white p-2 text-sm font-black border-2 border-black"
+                      className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                      onClick={handleStartGame}
                     >
-                      DEBUG: Drop Connection
+                      Start Game
                     </button>
-                  )}
-                </div>
-              )}
+                    {process.env.NODE_ENV === "development" && (
+                      <button
+                        onClick={() => socket.disconnect()}
+                        className="bottom-4 right-4 bg-red-500 text-white p-2 text-sm font-black border-2 border-black"
+                      >
+                        DEBUG: Drop Connection
+                      </button>
+                    )}
+                  </>
+                )}
+                <button
+                  className="border-4 border-black  p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  onClick={() => {
+                    resetContext();
+                    socket.emit("leave-game", { join_code });
+                    router.push("/dashboard");
+                  }}
+                >
+                  Back to Dashboard
+                </button>
+              </div>
             </div>
           </div>
 
@@ -256,6 +265,11 @@ export default function LobbyPage() {
           ) : null}
         </div>
       </div>
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }

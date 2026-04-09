@@ -41,7 +41,7 @@ class Game {
     return Array.from(this.players.values())
       .filter((p) => p.role !== "teacher")
       .map((p) => ({
-        userID: p.userId,
+        userId: p.userId,
         name: p.name,
         score: p.score,
         answer: p.answer,
@@ -127,6 +127,17 @@ class Game {
     }
   }
 
+  getQuestionAnswer(question) {
+    const text = question.options.find(
+      (o) => o.id === question.correct_option,
+    ).text;
+
+    return {
+      text: text,
+      option: question.correct_option,
+    };
+  }
+
   // returns an array of question context along with player answers
   createQuestionsSummary() {
     function compressOptions(options) {
@@ -166,7 +177,6 @@ class Game {
     const question = this.questionsSelected[this.currentQuestionIndex];
     const answers = [];
 
-    console.log("players length: " + this.players.size);
     for (const player of this.players.values()) {
       answers.push({
         userId: player.userId,

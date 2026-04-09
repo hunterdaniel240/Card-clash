@@ -62,7 +62,6 @@ export default function PostGamePage() {
     }
   };
 
-
   const getTeacherFeedback = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/aiSummaries/teacher", {
@@ -74,20 +73,12 @@ export default function PostGamePage() {
       });
 
       if (!res.ok) throw new Error("Failed to fetch teacher feedback");
+
       const data = await res.json();
       setTeacherAISummary(data.summary || "");
     } catch (error) {
-      console.error("Error fetching teacher feedback:", err);
-      setError("Could not load teacher feedback")
-  useEffect(() => {
-    if (questionsSummary == null || leaderboard == null) return;
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-
-    if (user.role === "student") {
-      getStudentFeedback();
-    } else if (user.role === "teacher") {
-      getTeacherFeedback();
+      console.error("Error fetching teacher feedback:", error);
+      setError("Could not load teacher feedback");
     }
   };
 

@@ -5,7 +5,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import StatsChart from "@/components/StatsChart";
 import Loading from "@/components/Loading";
-import socket from "@/app/socket";
 
 interface PlayerStats {
   playerId: string;
@@ -42,7 +41,7 @@ export default function StatsPage() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        
+
         if (user?.role === "teacher") {
           // Fetch teacher stats - all games they created
           const response = await fetch(
@@ -51,9 +50,9 @@ export default function StatsPage() {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
-            }
+            },
           );
-          
+
           if (response.ok) {
             const data = await response.json();
             setGameStats(data.games || []);
@@ -67,9 +66,9 @@ export default function StatsPage() {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
               },
-            }
+            },
           );
-          
+
           if (response.ok) {
             const data = await response.json();
             setPlayerStats([data] || []);
@@ -135,7 +134,9 @@ export default function StatsPage() {
                       : "bg-white text-black hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   }`}
                 >
-                  {tf === "all" ? "All Time" : tf.charAt(0).toUpperCase() + tf.slice(1)}
+                  {tf === "all"
+                    ? "All Time"
+                    : tf.charAt(0).toUpperCase() + tf.slice(1)}
                 </button>
               ))}
             </div>
@@ -147,11 +148,7 @@ export default function StatsPage() {
                 <h2 className="text-2xl font-black uppercase italic text-black mb-4">
                   Player Scores
                 </h2>
-                <StatsChart
-                  data={playerStats}
-                  type="scores"
-                  height={400}
-                />
+                <StatsChart data={playerStats} type="scores" height={400} />
               </div>
 
               {/* Accuracy Chart */}
@@ -159,11 +156,7 @@ export default function StatsPage() {
                 <h2 className="text-2xl font-black uppercase italic text-black mb-4">
                   Accuracy Percentage
                 </h2>
-                <StatsChart
-                  data={playerStats}
-                  type="accuracy"
-                  height={400}
-                />
+                <StatsChart data={playerStats} type="accuracy" height={400} />
               </div>
             </div>
 
@@ -183,9 +176,13 @@ export default function StatsPage() {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="font-black text-lg">{game.gameName}</p>
-                          <p className="text-sm font-bold">{new Date(game.date).toLocaleDateString()}</p>
+                          <p className="text-sm font-bold">
+                            {new Date(game.date).toLocaleDateString()}
+                          </p>
                         </div>
-                        <p className="font-black text-xl">{game.totalPlayers} players</p>
+                        <p className="font-black text-xl">
+                          {game.totalPlayers} players
+                        </p>
                       </div>
                     </div>
                   ))}

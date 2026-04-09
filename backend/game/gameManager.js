@@ -33,7 +33,7 @@ class GameManager {
       join_code = generateGameCode(6);
     } while (games.has(join_code));
 
-    const host = new Player(socket.socketId, socket.userId, name, role);
+    const host = new Player(socket.id, socket.userId, name, role);
     const settings = createGameSettings(settingsData);
     const gameId = crypto.randomUUID(); // this is to store in DB, join_code is used primarily for socketIO
 
@@ -75,7 +75,7 @@ class GameManager {
       !game.players.has({ userId: socket.userId })
     ) {
       console.log("adding player: " + game.players.size);
-      game.addPlayer(new Player(socket.socketId, socket.userId, name, role));
+      game.addPlayer(new Player(socket.id, socket.userId, name, role));
       return game;
     }
 

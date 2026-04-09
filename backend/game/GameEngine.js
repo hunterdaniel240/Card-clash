@@ -1,4 +1,7 @@
 const { uploadAnswersController } = require("../controllers/answersController");
+const {
+  updatePlayerScoreController,
+} = require("../controllers/gamePlayerController");
 
 async function runGameLoop(socketIo, game) {
   const join_code = game.join_code;
@@ -32,9 +35,11 @@ async function runGameLoop(socketIo, game) {
     // save answers to use in post game summary later
     game.recordAnswerHistory();
 
+    const answer_data = game.getQuestionAnswer(question);
+    console.log(answer_data);
     // trigger client side question reset and send current leaderboard
     socketIo.to(join_code).emit("question-end", {
-      correctAnswer: question.correct_option,
+      correctAnswer: answer_data,
       scores: game.getScores(),
     });
     game.currentQuestionIndex++;
@@ -47,10 +52,17 @@ async function runGameLoop(socketIo, game) {
   console.log("game status: " + game.status);
 
   // record all question answers to history
-  const answersDb_result = uploadAnswersController({
+  const answersDb_result = await uploadAnswersController({
     gameId: game.gameId,
     join_code: join_code,
     answerHistory: game.answerHistory,
+  });
+
+  console.log("calling db update");
+  const scoreDb_result = await updatePlayerScoreController({
+    gameId: game.gameId,
+    join_code: join_code,
+    scores: game.getPlayers(),
   });
 
   console.log("server finishing game");

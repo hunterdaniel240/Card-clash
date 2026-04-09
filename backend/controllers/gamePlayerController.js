@@ -52,13 +52,26 @@ async function getPlayersByGameController(req, res) {
 }
 
 // Update player score
-async function updatePlayerScoreController(req, res) {
+async function updatePlayerScoreController(data) {
   try {
-    const updated = await GamePlayer.updateScore(req.params.id, req.body.score);
-    res.json(updated);
+    const userIds = data.scores.map((player) => player.userId);
+    const scores = data.scores.map((player) => player.score);
+
+    const updated_result = await GamePlayer.updateScore(
+      data.gameId,
+      userIds,
+      scores,
+    );
+
+    console.log(
+      "Game scores updated to DB for " +
+        data.join_code +
+        ": " +
+        updated_result.rowCount +
+        " added",
+    );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to update score" });
   }
 }
 

@@ -32,16 +32,17 @@ const GamePlayer = {
     return result.rows;
   },
 
-  async updateScore(id, score) {
+  async updateScore(gameId, playerIds, scores) {
     const result = await db.query(
-      `UPDATE Game_Players
-       SET score=$1
-       WHERE id=$2
-       RETURNING *`,
-      [score, id],
+      `UPDATE game_players gp
+       SET score = updates.score
+       FROM UNNEST($1::int[], $2::int[]) AS updates(user_id, score)
+       WHERE gp.user_id = updates.user_id
+       AND gp.game_id = $3`,
+      [playerIds, scores, gameId],
     );
 
-    return result.rows[0];
+    return result;
   },
 };
 
