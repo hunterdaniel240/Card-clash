@@ -166,7 +166,89 @@ async function getStudentStats(gameId, userId, options = {}) {
   };
 }
 
+async function getTeacherStatsByDate(userId, date_from, date_to) {
+  let params = [userId];
+  let where = ["g.host_id = $1"];
+  let idx = 2;
+
+  // Date filtering 
+  if (date_from) {
+    where.push(`g.ended_at >= $${idx++}`);
+    params.push(date_from);
+  }
+
+  if (date_to) {
+    where.push(`g.ended_at <= $${idx++}`);
+    params.push(date_to);
+  }
+
+  const whereSQL = `WHERE ${where.join(" AND ")}`;
+
+  // Player stats across games
+  const playersResult = await pool.query(
+    `
+    SELECT 
+      a.user_id AS id,
+      u.name,
+      SUM(gp.score) AS score,
+      COUNT(*) AS total,
+      SUM(a.is_correct::int) AS correct,
+      AVG(a.is_correct::int) AS accuracy
+    FROM games g
+    JOIN answers a ON a.game_id = g.id
+    JOIN users u ON u.id = a.user_id
+    JOIN game_players gp 
+      ON gp.user_id = a.user_id AND gp.game_id = g.id
+    ${whereSQL}
+    GROUP BY a.user_id, u.name
+    ORDER BY score DESC
+    `,
+    params
+  );
+
+  // Question stats
+  const questionsResult = await pool.query(
+    `
+    SELECT
+      a.question_id,
+      COUNT(*) AS total_responses,
+      SUM(a.is_correct::int) AS correct_count,
+      AVG(a.is_correct::int) AS accuracy
+    FROM games g
+    JOIN answers a ON a.game_id = g.id
+    ${whereSQL}
+    GROUP BY a.question_id
+    `,
+    params
+  );
+
+  // Summary
+  const summaryResult = await pool.query(
+    `
+    SELECT
+      COUNT(DISTINCT g.id) AS total_games,
+      COUNT(DISTINCT a.user_id) AS total_players,
+      AVG(gp.score) AS average_score,
+      AVG(a.is_correct::int) AS overall_accuracy
+    FROM games g
+    JOIN answers a ON a.game_id = g.id
+    JOIN game_players gp 
+      ON gp.user_id = a.user_id AND gp.game_id = g.id
+    ${whereSQL}
+    `,
+    params
+  );
+
+  return {
+    timeframe: { date_from, date_to },
+    summary: summaryResult.rows[0],
+    players: playersResult.rows,
+    questions: questionsResult.rows
+  };
+}
+
 module.exports = {
   getTeacherStats,
-  getStudentStats
+  getStudentStats,
+  getTeacherStatsByDate
 };
