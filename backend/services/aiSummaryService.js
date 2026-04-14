@@ -97,6 +97,8 @@ async function generateTeacherFeedback(summary) {
     - ...
     `;
 
+  console.log(prompt);
+
   // const response = await client.responses.create({
   //   model: "gpt-4.1-mini",
   //   input: prompt,

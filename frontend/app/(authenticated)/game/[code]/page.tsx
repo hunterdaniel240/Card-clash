@@ -36,6 +36,7 @@ export default function ActiveGamePage() {
   const [gameOver, setGameOver] = useState(false);
 
   const timerRef = useRef(null);
+  const currentQuestionIndexRef = useRef(false);
   const TIME_BETWEEN_QUESTIONS = settings.secondsBetweenQuestions; // seconds pause
 
   // Submit answer
@@ -75,6 +76,11 @@ export default function ActiveGamePage() {
       });
       setQuestion(null);
       setWaiting(true);
+      if (currentQuestionIndexRef.current == totalQuestions) {
+        console.log("game end");
+        setGameOver(true);
+      }
+
       setTimeLeft(TIME_BETWEEN_QUESTIONS); // countdown between questions
     });
 
@@ -104,6 +110,10 @@ export default function ActiveGamePage() {
       socket.off("player-answered");
     };
   }, []);
+
+  useEffect(() => {
+    currentQuestionIndexRef.current = currentQuestionIndex;
+  }, [currentQuestionIndex]);
 
   // Client Timer, timeLeft is set by server emit
   useEffect(() => {
@@ -212,12 +222,16 @@ export default function ActiveGamePage() {
                       {correctAnswer.text}
                     </p>
                   )}
-                  <div className="text-center font-black text-xl">
-                    Waiting for next question...
-                  </div>
+                  {gameOver ? (
+                    <div className="text-center font-black text-xl">
+                      Game Over
+                    </div>
+                  ) : (
+                    <div className="text-center font-black text-xl">
+                      Waiting for next question...
+                    </div>
+                  )}
                 </>
-              ) : gameOver || currentQuestionIndex == totalQuestions ? (
-                <div className="text-center font-black text-xl">Game Over</div>
               ) : null}
             </div>
           </div>

@@ -51,7 +51,7 @@ class GameManager {
     if (game && game.hostId === userId) {
       games.delete(join_code);
 
-      // host left, but game never started
+      // host left, but game never started. This should never occur, but if anything weird happens this is a safety deletion
       if (game.status == "lobby") {
         const deletedGame = deleteGameController(game.gameId);
         console.log("deleted game: " + deletedGame);
@@ -156,7 +156,6 @@ class GameManager {
   static endGame(game) {
     game.status = "finished";
     game.ended_at = Date.now();
-    console.log("Server game status: " + game.status);
 
     const questionsSummary = game.createQuestionsSummary();
     const winners = game.calculateWinners();

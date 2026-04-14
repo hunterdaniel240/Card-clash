@@ -6,10 +6,10 @@ const {
 async function runGameLoop(socketIo, game) {
   const join_code = game.join_code;
   const timeBetweenQuestions = game.settings.secondsBetweenQuestions; // seconds
-  let gameLoopActive = true;
 
   while (game.currentQuestionIndex < game.totalQuestions) {
     if (game.status !== "in_progress") break; // game was reset or host ended game
+    if (game.readyPlayers.size == 1) break; // only host is left in the game
 
     // load question
     const question = game.questionsSelected[game.currentQuestionIndex];
@@ -49,7 +49,10 @@ async function runGameLoop(socketIo, game) {
 
   game.status = "finished";
   game.completed_previously = true;
-  console.log("game status: " + game.status);
+
+  if (game.settings.showAnswer && game.readyPlayers.size != 1) {
+    await sleep(timeBetweenQuestions * 1000);
+  }
 
   // record all question answers to history
   const answersDb_result = await uploadAnswersController({
@@ -58,14 +61,13 @@ async function runGameLoop(socketIo, game) {
     answerHistory: game.answerHistory,
   });
 
-  console.log("calling db update");
+  // record all scores to history
   const scoreDb_result = await updatePlayerScoreController({
     gameId: game.gameId,
     join_code: join_code,
     scores: game.getPlayers(),
   });
 
-  console.log("server finishing game");
   const questionsSummary = game.createQuestionsSummary();
 
   const winners = game.calculateWinners();
