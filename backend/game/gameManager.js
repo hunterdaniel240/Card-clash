@@ -147,20 +147,21 @@ class GameManager {
     const dbGamePlayers = await addPlayersController({
       gameId: game.gameId,
       join_code: join_code, // just used for logging
-      players: game.players,
+      players: game.getPlayers(),
     });
 
     return game;
   }
 
-  static endGame(game) {
+  static async endGame(game) {
+    console.log("ending the game " + game.gameId);
     game.status = "finished";
-    game.ended_at = Date.now();
+    game.ended_at = new Date().toISOString().replace("T", " ").replace("Z", "");
 
     const questionsSummary = game.createQuestionsSummary();
     const winners = game.calculateWinners();
 
-    const dbGame = endGameController({
+    const dbGame = await endGameController({
       gameId: game.gameId,
       status: game.status,
       ended_at: game.ended_at,

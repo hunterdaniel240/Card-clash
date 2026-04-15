@@ -50,9 +50,14 @@ async function deleteGameController(gameId) {
   }
 }
 
-async function endGameController(gameId, status, ended_at) {
+async function endGameController(data) {
   try {
-    const result = await Game.endGameDB(gameId, status, ended_at);
+    const result = await Game.endGameDB(
+      data.gameId,
+      data.status,
+      data.ended_at,
+    );
+    console.log("end game result" + result.rowCount);
     if (!result) {
       return null;
     }
@@ -133,7 +138,25 @@ async function getTeacherStatsByDateController(req, res) {
     const data = await gameService.getTeacherStatsByDate(
       userId,
       date_from,
-      date_to
+      date_to,
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+}
+
+async function getStudentStatsByDateController(req, res) {
+  const { userId } = req.params;
+  const { date_from, date_to } = req.query;
+
+  try {
+    const data = await gameService.getStudentStatsByDate(
+      userId,
+      date_from,
+      date_to,
     );
 
     res.json(data);
@@ -151,5 +174,6 @@ module.exports = {
   getGameByIdController,
   getAllGamesController,
   getGameStatsController,
+  getStudentStatsByDateController,
   getTeacherStatsByDateController,
 };

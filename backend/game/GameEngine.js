@@ -2,6 +2,7 @@ const { uploadAnswersController } = require("../controllers/answersController");
 const {
   updatePlayerScoreController,
 } = require("../controllers/gamePlayerController");
+const { GameManager } = require("./gameManager");
 
 async function runGameLoop(socketIo, game) {
   const join_code = game.join_code;
@@ -47,7 +48,6 @@ async function runGameLoop(socketIo, game) {
     await sleep(timeBetweenQuestions * 1000);
   }
 
-  game.status = "finished";
   game.completed_previously = true;
 
   if (game.settings.showAnswer && game.readyPlayers.size != 1) {
@@ -68,9 +68,7 @@ async function runGameLoop(socketIo, game) {
     scores: game.getPlayers(),
   });
 
-  const questionsSummary = game.createQuestionsSummary();
-
-  const winners = game.calculateWinners();
+  const { questionsSummary, winners } = await GameManager.endGame(game);
 
   // all questions cleared, send summary and final leaderboard
   socketIo.to(join_code).emit("game-end", {

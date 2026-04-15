@@ -40,12 +40,11 @@ const Game = {
       `UPDATE games
        SET status = $1,
            ended_at = $2
-       WHERE id = $3
-       RETURNING *`,
+       WHERE id = $3`,
       [status, ended_at, id],
     );
 
-    return result.rows[0];
+    return result;
   },
 
   async deleteGame(id) {

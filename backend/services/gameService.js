@@ -49,7 +49,7 @@ async function getTeacherStats(gameId, options = {}) {
     GROUP BY a.user_id, u.name, gp.score
     ORDER BY ${orderBy}
     `,
-    params
+    params,
   );
 
   // Question stats
@@ -65,7 +65,7 @@ async function getTeacherStats(gameId, options = {}) {
     GROUP BY a.question_id
     ORDER BY a.question_id
     `,
-    params
+    params,
   );
 
   // Game summary
@@ -80,16 +80,16 @@ async function getTeacherStats(gameId, options = {}) {
       ON gp.user_id = a.user_id AND gp.game_id = a.game_id
     ${whereSQL}
     `,
-    params
+    params,
   );
 
   return {
     game: {
       id: gameId,
-      ...summaryResult.rows[0]
+      ...summaryResult.rows[0],
     },
     players: playersResult.rows,
-    questions: questionsResult.rows
+    questions: questionsResult.rows,
   };
 }
 
@@ -97,10 +97,7 @@ async function getStudentStats(gameId, userId, options = {}) {
   const { filter, date_from, date_to } = options;
 
   let params = [gameId, userId];
-  let where = [
-    "a.game_id = $1",
-    "a.user_id = $2"
-  ];
+  let where = ["a.game_id = $1", "a.user_id = $2"];
 
   let idx = 3;
 
@@ -132,7 +129,7 @@ async function getStudentStats(gameId, userId, options = {}) {
     JOIN questions q ON q.id = a.question_id
     ${whereSQL}
     `,
-    params
+    params,
   );
 
   // Summary
@@ -149,7 +146,7 @@ async function getStudentStats(gameId, userId, options = {}) {
     ${whereSQL}
     GROUP BY gp.score
     `,
-    params
+    params,
   );
 
   return {
@@ -159,10 +156,10 @@ async function getStudentStats(gameId, userId, options = {}) {
         score: 0,
         total: 0,
         correct: 0,
-        accuracy: 0
-      })
+        accuracy: 0,
+      }),
     },
-    questions: questionsResult.rows
+    questions: questionsResult.rows,
   };
 }
 
@@ -171,7 +168,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
   let where = ["g.host_id = $1"];
   let idx = 2;
 
-  // Date filtering 
+  // Date filtering
   if (date_from) {
     where.push(`g.ended_at >= $${idx++}`);
     params.push(date_from);
@@ -203,7 +200,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
     GROUP BY a.user_id, u.name
     ORDER BY score DESC
     `,
-    params
+    params,
   );
 
   // Question stats
@@ -219,7 +216,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
     ${whereSQL}
     GROUP BY a.question_id
     `,
-    params
+    params,
   );
 
   // Summary
@@ -236,19 +233,85 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
       ON gp.user_id = a.user_id AND gp.game_id = g.id
     ${whereSQL}
     `,
-    params
+    params,
   );
 
   return {
     timeframe: { date_from, date_to },
     summary: summaryResult.rows[0],
     players: playersResult.rows,
-    questions: questionsResult.rows
+    questions: questionsResult.rows,
+  };
+}
+
+async function getStudentStatsByDate(userId, date_from, date_to) {
+  let params = [userId];
+  let dateWhere = [];
+  let idx = 2;
+
+  if (date_from) {
+    dateWhere.push(`g.ended_at >= $${idx++}`);
+    params.push(date_from);
+  }
+
+  if (date_to) {
+    dateWhere.push(`g.ended_at <= $${idx++}`);
+    params.push(date_to);
+  }
+
+  console.log(params.toString());
+  const dateWhereSQL = dateWhere.length ? `AND ${dateWhere.join(" AND ")}` : "";
+
+  // Summary stats for the student
+  const summaryResult = await pool.query(
+    `
+    SELECT
+      COUNT(DISTINCT g.id)        AS total_games,
+      SUM(gp.score)               AS total_score,
+      AVG(gp.score)               AS average_score,
+      SUM(a.is_correct::int)      AS total_correct,
+      COUNT(a.id)                 AS total_answers,
+      AVG(a.is_correct::int)      AS overall_accuracy
+    FROM games g
+    JOIN game_players gp ON gp.game_id = g.id AND gp.user_id = $1
+    JOIN answers a       ON a.game_id = g.id  AND a.user_id = $1
+    WHERE g.ended_at IS NOT NULL
+    ${dateWhereSQL}
+    `,
+    params,
+  );
+
+  // Per game breakdown for the graph (one row per game)
+  const gamesResult = await pool.query(
+    `
+    SELECT
+      g.id                        AS game_id,
+      g.ended_at,
+      gp.score,
+      SUM(a.is_correct::int)      AS correct,
+      COUNT(a.id)                 AS total_answers,
+      AVG(a.is_correct::int)      AS accuracy
+    FROM games g
+    JOIN game_players gp ON gp.game_id = g.id AND gp.user_id = $1
+    JOIN answers a       ON a.game_id = g.id  AND a.user_id = $1
+    WHERE g.ended_at IS NOT NULL
+    ${dateWhereSQL}
+    GROUP BY g.id, g.ended_at, gp.score
+    ORDER BY g.ended_at ASC
+    `,
+    params,
+  );
+
+  return {
+    timeframe: { date_from, date_to },
+    summary: summaryResult.rows[0],
+    games: gamesResult.rows,
   };
 }
 
 module.exports = {
   getTeacherStats,
   getStudentStats,
-  getTeacherStatsByDate
+  getStudentStatsByDate,
+  getTeacherStatsByDate,
 };

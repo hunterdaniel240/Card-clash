@@ -178,13 +178,20 @@ class Game {
     const answers = [];
 
     for (const player of this.players.values()) {
-      answers.push({
-        userId: player.userId,
-        name: player.name,
-        answer: player.answer,
-        isCorrect: player.answer === question.correct_option,
-        answered_at: player.answered_at,
-      });
+      if (player.role != "teacher") {
+        const answerDate = new Date(player.answeredAt)
+          .toISOString()
+          .replace("T", " ")
+          .replace("Z", "");
+
+        answers.push({
+          userId: player.userId,
+          name: player.name,
+          selected_option: player.answer,
+          isCorrect: player.answer === question.correct_option,
+          answered_at: answerDate,
+        });
+      }
     }
 
     this.answerHistory.push({

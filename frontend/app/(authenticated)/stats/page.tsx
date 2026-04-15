@@ -37,15 +37,35 @@ export default function StatsPage() {
     backgroundSize: "400px 400px",
   };
 
+  const getDateRange = (timeframe) => {
+    const now = new Date();
+    let from = new Date();
+
+    if (timeframe === "week") {
+      from.setDate(now.getDate() - 7);
+    } else if (timeframe === "month") {
+      from.setMonth(now.getMonth() - 1);
+    } else {
+      from.setFullYear(now.getFullYear() - 2);
+    }
+
+    return {
+      date_from: from.toISOString().replace("T", " ").replace("Z", ""),
+      date_to: now.toISOString().replace("T", " ").replace("Z", ""),
+    };
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
 
+        const { date_from, date_to } = getDateRange(timeframe);
+
         if (user?.role === "teacher") {
           // Fetch teacher stats - all games they created
           const response = await fetch(
-            `http://localhost:5000/api/stats/teacher/${user.id}?timeframe=${timeframe}`,
+            `http://localhost:5000/api/games/stats/teacher/${user.id}?date_from=${date_from}&date_to=${date_to}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -55,13 +75,15 @@ export default function StatsPage() {
 
           if (response.ok) {
             const data = await response.json();
-            setGameStats(data.games || []);
-            setPlayerStats(data.playerStats || []);
+            console.log("stats data\n" + JSON.stringify(data));
+
+            //  setGameStats(data.games || []);
+            //  setPlayerStats(data.playerStats || []);
           }
         } else {
           // Fetch student stats - their performance
           const response = await fetch(
-            `http://localhost:5000/api/stats/student/${user.id}?timeframe=${timeframe}`,
+            `http://localhost:5000/api/games/stats/student/${user.id}?date_from=${date_from}&date_to=${date_to}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -71,8 +93,9 @@ export default function StatsPage() {
 
           if (response.ok) {
             const data = await response.json();
-            setPlayerStats([data] || []);
-            setGameStats(data.games || []);
+            console.log("stats data\n" + JSON.stringify(data.summary));
+            // setPlayerStats([data] || []);
+            // setGameStats(data.games || []);
           }
         }
       } catch (error) {
@@ -83,6 +106,7 @@ export default function StatsPage() {
     };
 
     if (user?.id) {
+      console.log("fetching stats");
       fetchStats();
     }
   }, [user?.id, timeframe]);
