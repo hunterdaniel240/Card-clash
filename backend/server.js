@@ -3,6 +3,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+require("dotenv").config();
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
@@ -31,16 +32,20 @@ const {
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
+const env = app.get("env");
+console.log("environment: " + env);
+
+const origin =
+  env == "production" ? process.env.SITEURL : "http://localhost:3000";
 
 // Initialize SocketIO
-initSocketServer(server);
+initSocketServer(server, origin);
 
 const io = getSocketIo();
 
-// Only accept localhost for now
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: origin,
     credentials: true,
   }),
 );

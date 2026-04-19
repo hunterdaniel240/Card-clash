@@ -23,6 +23,11 @@ interface GameStats {
   playerStats: PlayerStats[];
 }
 
+const server_url =
+  process.env.NODE_ENV === "production"
+    ? process.env.PROD_SERVER_URL
+    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
+
 export default function StatsPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -65,7 +70,7 @@ export default function StatsPage() {
         if (user?.role === "teacher") {
           // Fetch teacher stats - all games they created
           const response = await fetch(
-            `http://localhost:5000/api/games/stats/teacher/${user.id}?date_from=${date_from}&date_to=${date_to}`,
+            `${server_url}/api/games/stats/teacher/${user.id}?date_from=${date_from}&date_to=${date_to}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -83,7 +88,7 @@ export default function StatsPage() {
         } else {
           // Fetch student stats - their performance
           const response = await fetch(
-            `http://localhost:5000/api/games/stats/student/${user.id}?date_from=${date_from}&date_to=${date_to}`,
+            `${server_url}/api/games/stats/student/${user.id}?date_from=${date_from}&date_to=${date_to}`,
             {
               headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -93,7 +98,7 @@ export default function StatsPage() {
 
           if (response.ok) {
             const data = await response.json();
-            console.log("stats data\n" + JSON.stringify(data.summary));
+            console.log("stats data\n" + JSON.stringify(data));
             // setPlayerStats([data] || []);
             // setGameStats(data.games || []);
           }
@@ -101,7 +106,9 @@ export default function StatsPage() {
       } catch (error) {
         console.error("Failed to fetch stats:", error);
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 3000);
       }
     };
 

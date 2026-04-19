@@ -29,6 +29,7 @@ export default function ActiveGamePage() {
     text: "",
     option: "",
   });
+  const [playerAnswer, setplayerAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(null);
   const [answered, setAnswered] = useState(false);
   const [answeredPlayers, setAnsweredPlayers] = useState([]);
@@ -45,6 +46,7 @@ export default function ActiveGamePage() {
     console.log(user.id + " submitting answer " + optionId);
     socket.emit("submit-answer", { join_code, answer: optionId });
     setAnswered(true);
+    setplayerAnswer(optionId);
   }
 
   // Handles users trying to leave while game is in progress
@@ -58,6 +60,8 @@ export default function ActiveGamePage() {
       console.log("question: " + data.question);
       clearInterval(timerRef.current);
       setQuestion(data.question);
+      setplayerAnswer("");
+
       setAnswered(false);
       setWaiting(false);
       setTimeLeft(data.timeLimit);
@@ -216,6 +220,15 @@ export default function ActiveGamePage() {
                 </>
               ) : waiting ? (
                 <>
+                  {user.role == "student" && (
+                    <p className="text-center font-black text-xl">
+                      Your answer was{" "}
+                      {playerAnswer == correctAnswer.option
+                        ? "correct"
+                        : "incorrect"}
+                    </p>
+                  )}
+
                   {settings.showAnswer && (
                     <p className="text-center font-black text-xl">
                       Correct answer was {correctAnswer.option}:{" "}
@@ -223,13 +236,11 @@ export default function ActiveGamePage() {
                     </p>
                   )}
                   {gameOver ? (
-                    <div className="text-center font-black text-xl">
-                      Game Over
-                    </div>
+                    <p className="text-center font-black text-xl">Game Over</p>
                   ) : (
-                    <div className="text-center font-black text-xl">
+                    <p className="text-center font-black text-xl">
                       Waiting for next question...
-                    </div>
+                    </p>
                   )}
                 </>
               ) : null}

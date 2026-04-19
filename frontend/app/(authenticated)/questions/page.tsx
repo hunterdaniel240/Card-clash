@@ -6,6 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 
 import { fetchQuestions } from "@/lib/api/questions";
 
+import Loading from "@/components/Loading";
+
+const server_url =
+  process.env.NODE_ENV === "production"
+    ? process.env.PROD_SERVER_URL
+    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
+
 export default function QuestionsPage() {
   const { user } = useAuth();
   const [showModal, setShowModal] = useState(false);
@@ -45,7 +52,10 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     loadQuestions();
-    setLoading(false);
+
+    setTimeout(() => {
+      setLoading(false);
+    }, 3000);
   }, []);
 
   const handleChange = (e) => {
@@ -62,7 +72,7 @@ export default function QuestionsPage() {
       ...form,
     };
     try {
-      const res = await fetch("http://localhost:5000/api/questions", {
+      const res = await fetch(`${server_url}/api/questions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +100,7 @@ export default function QuestionsPage() {
   // DELETE QUESTION
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/questions/${id}`, {
+      const res = await fetch(`${server_url}/api/questions/${id}`, {
         method: "DELETE",
       });
 
@@ -101,7 +111,9 @@ export default function QuestionsPage() {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <>
       <style>{`
         @keyframes bg-pulse {

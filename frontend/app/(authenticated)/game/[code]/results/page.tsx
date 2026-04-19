@@ -5,6 +5,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import socket from "@/app/socket";
 
+const server_url =
+  process.env.NODE_ENV === "production"
+    ? process.env.PROD_SERVER_URL
+    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
+
 export default function PostGamePage() {
   const { user } = useAuth();
   const {
@@ -43,7 +48,7 @@ export default function PostGamePage() {
 
   const getStudentFeedback = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/aiSummaries/student", {
+      const res = await fetch(`${server_url}/api/aiSummaries/student`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -64,7 +69,7 @@ export default function PostGamePage() {
 
   const getTeacherFeedback = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/aiSummaries/teacher", {
+      const res = await fetch(`${server_url}/api/aiSummaries/teacher`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

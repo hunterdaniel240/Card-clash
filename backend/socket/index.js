@@ -1,11 +1,12 @@
 const { Server } = require("socket.io");
+require("dotenv").config();
 
 let io;
 
-function initSocketServer(httpServer) {
+function initSocketServer(httpServer, origin) {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: origin,
       credentials: true,
     },
   });

@@ -1,4 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
+const server_url =
+  process.env.NODE_ENV === "production"
+    ? process.env.PROD_SERVER_URL
+    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
 
 export const AuthContext = createContext(null);
 
@@ -10,7 +14,7 @@ export function AuthProvider({ children }) {
     // Send browser's cookie to server to check for a valid token
     async function checkToken() {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
+        const res = await fetch(`${server_url}/api/auth/me`, {
           credentials: "include",
         });
 
@@ -34,7 +38,7 @@ export function AuthProvider({ children }) {
   // REGISTER SERVER REQUEST
   async function register(name, email, password, role) {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch(`${server_url}/api/auth/register`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -60,7 +64,7 @@ export function AuthProvider({ children }) {
   // LOGIN SERVER REQUEST
   async function login(email, password) {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(`${server_url}/api/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -87,7 +91,7 @@ export function AuthProvider({ children }) {
   // LOGOUT SERVER REQUEST
   async function logout() {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/logout", {
+      const res = await fetch(`${server_url}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
