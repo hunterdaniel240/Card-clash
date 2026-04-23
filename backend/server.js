@@ -57,7 +57,7 @@ app.use(cookieParser()); // Cookie parsing for the token
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
-app.use("/api/games", gameRoutes);
+app.use("/api", gameRoutes);
 app.use("/api/gamePlayers", gamePlayersRoutes);
 app.use("/api/answers", answersRoutes);
 app.use("/api/aiSummaries", aiSummaryRoutes);

@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import socket from "@/app/socket";
 
 export default function ActiveGamePage() {
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: any };
   const {
     settings,
     players,
@@ -19,31 +19,31 @@ export default function ActiveGamePage() {
     totalQuestions,
     leaderboard,
     setLeaderboard,
-    setWinners, // TODO
+    setWinners,
     setQuestionsSummary,
-  } = useGame();
+  } = useGame() as any;
   const router = useRouter();
 
-  const [question, setQuestion] = useState(null);
+  const [question, setQuestion] = useState<any>(null);
   const [correctAnswer, setCorrectAnswer] = useState({
     text: "",
     option: "",
   });
   const [playerAnswer, setplayerAnswer] = useState("");
-  const [timeLeft, setTimeLeft] = useState(null);
+  const [timeLeft, setTimeLeft] = useState<any>(null);
   const [answered, setAnswered] = useState(false);
-  const [answeredPlayers, setAnsweredPlayers] = useState([]);
+  const [answeredPlayers, setAnsweredPlayers] = useState<any[]>([]);
   const [waiting, setWaiting] = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
-  const timerRef = useRef(null);
+  const timerRef = useRef<any>(null);
   const currentQuestionIndexRef = useRef(false);
-  const TIME_BETWEEN_QUESTIONS = settings.secondsBetweenQuestions; // seconds pause
+  const TIME_BETWEEN_QUESTIONS = settings?.secondsBetweenQuestions ?? 3; // seconds pause
 
   // Submit answer
-  function submitAnswer(optionId) {
+  function submitAnswer(optionId: any) {
     if (answered) return;
-    console.log(user.id + " submitting answer " + optionId);
+    console.log(user?.id + " submitting answer " + optionId);
     socket.emit("submit-answer", { join_code, answer: optionId });
     setAnswered(true);
     setplayerAnswer(optionId);

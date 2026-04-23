@@ -108,7 +108,7 @@ async function getAllGamesController(req, res) {
 
 // Get game stats
 async function getGameStatsController(req, res) {
-  const { id } = req.params;
+  const { id: gameId } = req.params;
   const { view } = req.query;
 
   try {
@@ -118,7 +118,7 @@ async function getGameStatsController(req, res) {
     }
 
     if (view === "student") {
-      const playerId = req.user?.id; // make sure auth middleware sets this
+      const userId = req.user?.id; // make sure auth middleware sets this
       const data = await gameService.getStudentStats(gameId, userId, req.query);
       return res.json(data);
     }
@@ -166,6 +166,24 @@ async function getStudentStatsByDateController(req, res) {
   }
 }
 
+async function getStudentStatsByDateController(req, res) {
+  const { userId } = req.params;
+  const { date_from, date_to } = req.query;
+
+  try {
+    const data = await gameService.getStudentStatsByDate(
+      userId,
+      date_from,
+      date_to
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+}
+
 module.exports = {
   createGameController,
   deleteGameController,
@@ -176,4 +194,5 @@ module.exports = {
   getGameStatsController,
   getStudentStatsByDateController,
   getTeacherStatsByDateController,
+  getStudentStatsByDateController,
 };
