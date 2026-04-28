@@ -22,17 +22,24 @@ export default function GameListener({ children }) {
       router.push("/dashboard");
     };
 
+    const onKicked = () => {
+      resetContext(null);
+      router.push("/dashboard");
+    };
+
     const onHostDisconnect = () => setHostDisconnected(true);
     const onHostReconnect = () => setHostDisconnected(false);
 
     socket.on("game-terminated", onGameTerminated);
     socket.on("host-disconnected", onHostDisconnect);
     socket.on("host-reconnected", onHostReconnect);
+    socket.on("kicked", onKicked);
 
     return () => {
       socket.off("game-terminated", onGameTerminated);
       socket.off("host-disconnected", onHostDisconnect);
       socket.off("host-reconnected", onHostReconnect);
+      socket.off("kicked", onKicked);
     };
   }, []);
 

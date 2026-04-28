@@ -20,8 +20,6 @@ async function generateStudentFeedback(summary, studentName) {
     return "You answered all questions correctly!";
   }
 
-  console.log("use for prompt: " + JSON.stringify(studentQuestions));
-
   const prompt = `You are an educational assistant helping a student improve after a trivia game.
 
     Analyze ONLY the questions the student got wrong.
@@ -36,6 +34,8 @@ async function generateStudentFeedback(summary, studentName) {
     2. 2–3 specific things they should study or review
 
     Keep the tone encouraging and clear.
+    If the student answer is undefined, this means they did not provide an answer. 
+    In the response do not write undefined, write "Not Answered" instead.
 
     Student Results:
     ${JSON.stringify(studentQuestions, null, 2)}
@@ -55,13 +55,12 @@ async function generateStudentFeedback(summary, studentName) {
     - ...
     `;
 
-  console.log(prompt);
-  // const response = await client.responses.create({
-  //   model: "gpt-4.1-mini",
-  //   input: prompt,
-  // });
-  // // response.output[0].content[0].text
-  // return response.output_text;
+  const response = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+  });
+  // response.output[0].content[0].text
+  return response.output_text;
 }
 
 async function generateTeacherFeedback(summary) {
@@ -75,7 +74,8 @@ async function generateTeacherFeedback(summary) {
     3. Common Misconceptions (based on wrong answers)
     4. Suggested Teaching Improvements
 
-    Focus on patterns across multiple students.
+    Focus on patterns across multiple students. 
+    Sometimes a student will not answer and may appear as undefined. Still provide an input of the common wrong answer with the other options provided that isn't the correct option.
 
     Game Data:
     ${JSON.stringify(summary, null, 2)}
@@ -97,14 +97,12 @@ async function generateTeacherFeedback(summary) {
     - ...
     `;
 
-  console.log(prompt);
+  const response = await client.responses.create({
+    model: "gpt-4.1-mini",
+    input: prompt,
+  });
 
-  // const response = await client.responses.create({
-  //   model: "gpt-4.1-mini",
-  //   input: prompt,
-  // });
-
-  // return response.output_text;
+  return response.output_text;
 }
 
 module.exports = { generateStudentFeedback, generateTeacherFeedback };

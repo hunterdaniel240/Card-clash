@@ -34,9 +34,6 @@ function JoinGameOn(socket) {
 
 function LeaveGameOn(socket) {
   socket.on("leave-game", ({ join_code }) => {
-    console.log("socket.userId:", socket.userId); // 👈 add this
-
-    console.log("socket leave-game called on server");
     GameManager.leaveGame(socket.userId, join_code);
 
     const game = GameManager.getGame(join_code);
@@ -44,6 +41,33 @@ function LeaveGameOn(socket) {
       LobbyUpdateEmit(join_code, game);
     } else {
       LobbyClosedEmit(join_code);
+    }
+  });
+}
+
+function KickPlayerOn(socket) {
+  socket.on("kick-player", ({ join_code, target_id }) => {
+    const game = GameManager.getGame(join_code);
+    if (!game) return;
+
+    if (game.hostId !== socket.userId) return;
+
+    GameManager.leaveGame(target_id, join_code);
+
+    const updatedGame = GameManager.getGame(join_code);
+
+    if (updatedGame) {
+      LobbyUpdateEmit(join_code, updatedGame);
+    } else {
+      LobbyClosedEmit(join_code);
+    }
+
+    const targetSocket = [...socket.server.sockets.sockets.values()].find(
+      (s) => s.userId === target_id,
+    );
+
+    if (targetSocket) {
+      targetSocket.emit("kicked");
     }
   });
 }
@@ -136,7 +160,6 @@ function GameReadyOn(socket) {
 
 function SubmitAnswerOn(socket) {
   socket.on("submit-answer", ({ join_code, answer }) => {
-    console.log("submitted answer called");
     const game = GameManager.submitAnswer(socket.userId, join_code, answer);
 
     if (!game) return null;
@@ -149,6 +172,7 @@ module.exports = {
   CreateGameOn,
   JoinGameOn,
   LeaveGameOn,
+  KickPlayerOn,
   UserDisconnectingOn,
   UpdateGameSettingsOn,
   StartGameOn,

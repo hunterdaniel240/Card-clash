@@ -62,7 +62,6 @@ class Game {
   setQuestions(questions) {
     if (questions.length === 0) return null;
 
-    console.log("Shuffle Questions: " + this.settings.shuffleQuestions);
     if (this.settings.shuffleQuestions) {
       const shuffled = [...questions];
       for (let i = shuffled.length - 1; i > 0; i--) {

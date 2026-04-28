@@ -1,13 +1,25 @@
 const AISummary = require("../models/AISummary");
 
 // Create AI summary
-async function createSummaryController(req, res) {
+async function createSummaryController(data) {
   try {
-    const summary = await AISummary.createSummary(req.body);
-    res.status(201).json(summary);
+    const summary = await AISummary.createSummary(
+      data.game_id,
+      data.user_id,
+      data.summary_text,
+    );
+
+    console.log(
+      "Summary added to DB for " +
+        data.game_id +
+        ": " +
+        summary.rowCount +
+        " added",
+    );
+    return summary;
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to create summary" });
+    return null;
   }
 }
 
@@ -25,5 +37,5 @@ async function getSummaryByGameController(req, res) {
 
 module.exports = {
   createSummaryController,
-  getSummaryByGameController
+  getSummaryByGameController,
 };

@@ -4,6 +4,7 @@ import { useGame } from "@/context/GameContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import socket from "@/app/socket";
+import Loading from "@/components/Loading";
 
 const server_url =
   process.env.NODE_ENV === "production"
@@ -16,6 +17,7 @@ export default function PostGamePage() {
     join_code,
     questionsSummary,
     winners,
+    gameId,
     setgameId,
     setSettings,
     setJoin_code,
@@ -52,6 +54,8 @@ export default function PostGamePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          game_id: gameId,
+          user_id: user.id,
           summary: questionsSummary,
           studentName: user.name,
         }),
@@ -60,10 +64,14 @@ export default function PostGamePage() {
       if (!res.ok) throw new Error("Failed to fetch student feedback");
 
       const data = await res.json();
+      console.log(JSON.stringify(data));
+
       setStudentAISummary(data.summary || "");
     } catch (err) {
       console.error("Error fetching student feedback:", err);
       setError("Could not load student feedback");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -73,6 +81,8 @@ export default function PostGamePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          game_id: gameId,
+          user_id: user.id,
           summary: questionsSummary,
         }),
       });
@@ -80,10 +90,13 @@ export default function PostGamePage() {
       if (!res.ok) throw new Error("Failed to fetch teacher feedback");
 
       const data = await res.json();
+      console.log(JSON.stringify(data));
       setTeacherAISummary(data.summary || "");
     } catch (error) {
       console.error("Error fetching teacher feedback:", error);
       setError("Could not load teacher feedback");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,10 +167,11 @@ export default function PostGamePage() {
     if (!stickyWinners) {
       setStickyWinners(winners);
     }
-    setLoading(false);
   }, [questionsSummary, winners, user.role]);
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <>
       <style>{`
         @keyframes bg-pulse {

@@ -18,7 +18,11 @@ interface StatsChartProps {
   height?: number;
 }
 
-export default function StatsChart({ data, type, height = 400 }: StatsChartProps) {
+export default function StatsChart({
+  data,
+  type,
+  height = 400,
+}: StatsChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -35,7 +39,7 @@ export default function StatsChart({ data, type, height = 400 }: StatsChartProps
 
     const labels = data.map((stat) => stat.playerName);
     const values = data.map((stat) =>
-      type === "scores" ? stat.score : stat.accuracy
+      type === "scores" ? stat.score : stat.accuracy,
     );
 
     const colors =
@@ -87,7 +91,11 @@ export default function StatsChart({ data, type, height = 400 }: StatsChartProps
         chartRef.current.destroy();
       }
     };
-  }, [data, type]);
+  }, []);
 
-  return <canvas ref={canvasRef} style={{ height: `${height}px` }} />;
+  return (
+    <div>
+      <canvas ref={canvasRef} />
+    </div>
+  );
 }

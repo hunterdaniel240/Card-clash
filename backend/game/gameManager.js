@@ -74,7 +74,6 @@ class GameManager {
       game.players.size < game.settings.maxPlayers &&
       !game.players.has({ userId: socket.userId })
     ) {
-      console.log("adding player: " + game.players.size);
       game.addPlayer(new Player(socket.id, socket.userId, name, role));
       return game;
     }
@@ -154,7 +153,6 @@ class GameManager {
   }
 
   static async endGame(game) {
-    console.log("ending the game " + game.gameId);
     game.status = "finished";
     game.ended_at = new Date().toISOString().replace("T", " ").replace("Z", "");
 

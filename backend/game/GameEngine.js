@@ -37,7 +37,6 @@ async function runGameLoop(socketIo, game) {
     game.recordAnswerHistory();
 
     const answer_data = game.getQuestionAnswer(question);
-    console.log(answer_data);
     // trigger client side question reset and send current leaderboard
     socketIo.to(join_code).emit("question-end", {
       correctAnswer: answer_data,

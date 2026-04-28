@@ -6,28 +6,6 @@ import { useRouter } from "next/navigation";
 import StatsChart from "@/components/StatsChart";
 import Loading from "@/components/Loading";
 
-interface PlayerStats {
-  playerId: string;
-  playerName: string;
-  score: number;
-  accuracy: number;
-  gamesPlayed: number;
-  avgResponseTime: number;
-}
-
-interface GameStats {
-  gameId: string;
-  gameName: string;
-  date: string;
-  totalPlayers: number;
-  playerStats: PlayerStats[];
-}
-
-const server_url =
-  process.env.NODE_ENV === "production"
-    ? process.env.PROD_SERVER_URL
-    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
-
 export default function StatsPage() {
   const { user } = useAuth() as { user: any };
   const router = useRouter();
@@ -53,15 +31,14 @@ export default function StatsPage() {
     } else if (timeframe === "month") {
       from.setMonth(now.getMonth() - 1);
     } else {
-      from.setFullYear(now.getFullYear() - 2);
+      return {};
     }
 
     return {
-      date_from: from.toISOString().replace("T", " ").replace("Z", ""),
-      date_to: now.toISOString().replace("T", " ").replace("Z", ""),
+      date_from: from.toISOString(),
+      date_to: now.toISOString(),
     };
   }
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -76,7 +53,7 @@ export default function StatsPage() {
         if (user.role === "teacher") {
           const { date_from, date_to } = getDateRange(timeframe);
 
-          let url = `${server_url}/api/games/stats/teacher/${user.id}`;
+          let url = `http://localhost:5000/api/stats/teacher/${user.id}`;
 
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
@@ -96,7 +73,7 @@ export default function StatsPage() {
         } else {
           const { date_from, date_to } = getDateRange(timeframe);
 
-          let url = `${server_url}/api/games/stats/student/${user.id}`;
+          let url = `http://localhost:5000/api/stats/student/${user.id}`;
 
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
@@ -109,20 +86,31 @@ export default function StatsPage() {
 
           if (!response.ok) throw new Error("Failed to load student stats");
 
+          // FIXING
           const data = await response.json();
-          setSummary(data.summary || null);
-          setPlayerStats(data.games || []);
-          setGameStats(data.games || []);
           console.log(data);
-          console.log(data.games);
+          setSummary(data.summary || null);
+          // FIX: Map games to a chart-friendly structure for StatsChart!
+          const mappedStats = (data.games || []).map((game) => ({
+            playerId: game.game_id,
+            playerName: game.name ?? `Game ${game.game_id.slice(0, 4)}`,
+            score: game.score,
+            accuracy:
+              game.total_answers && game.correct != null
+                ? (game.correct / game.total_answers) * 100
+                : 0,
+            gamesPlayed: 1,
+            avgResponseTime: game.avg_response_time ?? 0,
+          }));
+          setPlayerStats(mappedStats);
+          setGameStats(mappedStats);
+          console.log("MAPPED STATS FOR CHART:", mappedStats);
         }
       } catch (error) {
         console.error("Failed to fetch stats:", error);
         setError("Failed to load stats");
       } finally {
-        setTimeout(() => {
-          setLoading(false);
-        }, 3000);
+        setLoading(false);
       }
     };
 
@@ -285,24 +273,27 @@ export default function StatsPage() {
                   Game History
                 </h2>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {gameStats.map((game) => (
-                    <div
-                      key={game.game_id}
-                      className="border-4 border-black p-4"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-black text-lg">
-                            {new Date(game.ended_at).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm font-bold">
-                            Correct: {game.correct} / {game.total_answers}
-                          </p>
+                  {gameStats.map((game) => {
+                    console.log("gamestats" + JSON.stringify(game));
+                    return (
+                      <div
+                        key={game.game_id}
+                        className="border-4 border-black p-4"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-black text-lg">
+                              {new Date(game.ended_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm font-bold">
+                              Correct: {game.correct} / {game.total_answers}
+                            </p>
+                          </div>
+                          <p className="font-black text-xl">{game.score}</p>
                         </div>
-                        <p className="font-black text-xl">{game.score}</p>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

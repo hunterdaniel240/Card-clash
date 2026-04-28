@@ -21,6 +21,7 @@ const {
   CreateGameOn,
   JoinGameOn,
   LeaveGameOn,
+  KickPlayerOn,
   UserDisconnectingOn,
   UpdateGameSettingsOn,
   StartGameOn,
@@ -77,6 +78,7 @@ io.on("connection", (socket) => {
   CreateGameOn(socket);
   JoinGameOn(socket);
   LeaveGameOn(socket);
+  KickPlayerOn(socket);
   UserDisconnectingOn(socket);
   UpdateGameSettingsOn(socket);
   StartGameOn(socket);

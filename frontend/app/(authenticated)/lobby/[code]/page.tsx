@@ -25,6 +25,7 @@ export default function LobbyPage() {
   const {
     setgameId,
     setisHost,
+    isHost,
     settings,
     setSettings,
     setJoin_code,
@@ -195,16 +196,30 @@ export default function LobbyPage() {
                       className={
                         user.name === player.name
                           ? "flex items-center gap-4 border-4 border-green-600 p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
-                          : "flex items-center gap-4 border-4 border-black p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
+                          : "flex justify-between items-center gap-4 border-4 border-black p-4 bg-white font-black text-xl hover:translate-x-2 transition-transform cursor-default group"
                       }
                     >
-                      <div className="h-10 w-10 border-4 border-black bg-cyan-400 flex items-center justify-center text-lg group-hover:bg-yellow-300 transition-colors">
-                        {i + 1}
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 border-4 border-black bg-cyan-400 flex items-center justify-center text-lg group-hover:bg-yellow-300 transition-colors">
+                          {i + 1}
+                        </div>
+                        <span className="uppercase tracking-tight">
+                          {player.name}
+                        </span>
                       </div>
-
-                      <span className="uppercase tracking-tight">
-                        {player.name}
-                      </span>
+                      {user?.role === "teacher" && (
+                        <button
+                          className="border-4 border-black p-2 text-sm font-black uppercase text-red-600 transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                          onClick={() => {
+                            socket.emit("kick-player", {
+                              join_code,
+                              target_id: player.userId,
+                            });
+                          }}
+                        >
+                          Kick
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
