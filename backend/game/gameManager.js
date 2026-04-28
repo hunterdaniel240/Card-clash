@@ -67,15 +67,36 @@ class GameManager {
     const game = games.get(join_code);
 
     // verify game is not in progress and lobby is not full
-    if (
-      game &&
-      game.status == "lobby" &&
-      game.players.size < game.settings.maxPlayers &&
-      !game.players.has({ userId: socket.userId })
-    ) {
-      game.addPlayer(new Player(socket.id, socket.userId, name, role));
-      return game;
+    if (!game) {
+      return {
+        game: null,
+        message: "Lobby not found. Please check code and try again",
+      };
     }
+
+    if (game.status != "lobby") {
+      return {
+        game: null,
+        message: "Game currently in session.",
+      };
+    }
+
+    if (game.getPlayers().length == game.settings.maxPlayers) {
+      return {
+        game: null,
+        message: "Lobby is currently full",
+      };
+    }
+
+    if (game.players.has({ userId: socket.userId })) {
+      return {
+        game: null,
+        message: "Error joining game. Please have host restart lobby.",
+      };
+    }
+
+    game.addPlayer(new Player(socket.id, socket.userId, name, role));
+    return { game: game, message: "Joined game" };
   }
 
   static leaveGame(userId, join_code) {

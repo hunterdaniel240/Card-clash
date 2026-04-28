@@ -106,18 +106,18 @@ export default function PostGamePage() {
     socket.emit(
       "join-game",
       { name: user.name, role: user.role, join_code },
-      (game) => {
-        if (game) {
-          setgameId(game.gameId);
-          setSettings(game.settings);
-          setJoin_code(game.join_code);
-          setStatus(game.status);
-          setPlayers(game.players);
-          setCurrentQuestionIndex(game.currentQuestionIndex);
-          setLeaderboard(game.leaderboard);
-          setWinners(game.winners);
+      (res) => {
+        if (res.success) {
+          setgameId(res.game.gameId);
+          setSettings(res.game.settings);
+          setJoin_code(res.game.join_code);
+          setStatus(res.game.status);
+          setPlayers(res.game.players);
+          setCurrentQuestionIndex(res.game.currentQuestionIndex);
+          setLeaderboard(res.game.leaderboard);
+          setWinners(res.game.winners);
 
-          router.push(`/lobby/${game.join_code}`);
+          router.push(`/lobby/${res.game.join_code}`);
         } else {
           if (!waitingOnHostRef.current) return;
 

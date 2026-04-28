@@ -97,27 +97,34 @@ export default function DashboardPage() {
     socket.emit(
       "join-game",
       { name: user.name, role: user.role, join_code: code },
-      (game) => {
+      (res) => {
         // ERROR HANDLING
-        if (!game) {
+
+        if (res) {
+          if (!res.success) {
+            setErrorMessage(res.message);
+            setShowError(true);
+            return;
+          }
+
+          setgameId(res.game.gameId);
+          setisHost(false);
+          setSettings(res.game.settings);
+          setJoin_code(res.game.join_code);
+          setStatus(res.game.status);
+          setPlayers(res.game.players);
+          setCurrentQuestionIndex(res.game.currentQuestionIndex);
+          setLeaderboard(res.game.leaderboard);
+          setWinners(res.game.winners);
+
+          router.push(`/lobby/${res.game.join_code}`);
+        } else {
           setErrorMessage(
-            "Failed to join game. Please check the game code and try again.",
+            "Failed to join game. Please check code and try again.",
           );
           setShowError(true);
           return;
         }
-
-        setgameId(game.gameId);
-        setisHost(false);
-        setSettings(game.settings);
-        setJoin_code(game.join_code);
-        setStatus(game.status);
-        setPlayers(game.players);
-        setCurrentQuestionIndex(game.currentQuestionIndex);
-        setLeaderboard(game.leaderboard);
-        setWinners(game.winners);
-
-        router.push(`/lobby/${game.join_code}`);
       },
     );
   };

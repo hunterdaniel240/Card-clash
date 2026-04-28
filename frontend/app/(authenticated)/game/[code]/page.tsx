@@ -86,9 +86,6 @@ export default function ActiveGamePage() {
 
     socket.once("game-end", (data) => {
       clearInterval(timerRef.current);
-      setQuestion(null);
-      setWaiting(false);
-      setTimeLeft(null);
       setGameOver(true);
 
       setLeaderboard(data.finalScores);

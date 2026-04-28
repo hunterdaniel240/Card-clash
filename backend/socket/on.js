@@ -19,15 +19,15 @@ function CreateGameOn(socket) {
 
 function JoinGameOn(socket) {
   socket.on("join-game", ({ name, role, join_code }, callback) => {
-    let game = GameManager.joinGame(socket, join_code, name, role);
+    let { game, message } = GameManager.joinGame(socket, join_code, name, role);
 
     if (game) {
       socket.join(join_code);
 
       LobbyUpdateEmit(join_code, game);
-      callback(game.toDTO());
+      callback({ success: true, game: game.toDTO() });
     } else {
-      callback(null);
+      callback({ success: false, message: message });
     }
   });
 }
