@@ -205,10 +205,9 @@ export default function DashboardPage() {
                 >
                   {item.label}
                   <span className="text-3xl transition-transform group-hover:rotate-12">
-                    {item.label === "Create Game"
+                    {item.label === "Create Game" || item.label === "Join Game"
                       ? "!!"
-                      : item.label === "Join Game" ||
-                          item.label === "View Stats"
+                      : item.label === "View Stats"
                         ? "✓"
                         : item.label === "View Questions"
                           ? "?"

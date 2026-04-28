@@ -6,9 +6,6 @@ const {
   generateTeacherFeedback,
 } = require("../services/aiSummaryService");
 
-router.post("/", controller.createSummaryController);
-router.get("/game/:gameId", controller.getSummaryByGameController);
-
 // ai calls
 router.post("/student", async (req, res) => {
   const { game_id, user_id, summary, studentName } = req.body;

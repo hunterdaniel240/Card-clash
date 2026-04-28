@@ -25,19 +25,6 @@ async function createSummaryController(data) {
   }
 }
 
-// Get summary by game
-async function getSummaryByGameController(req, res) {
-  try {
-    const summary = await AISummary.getSummaryByGame(req.params.gameId);
-    if (!summary) return res.status(404).json({ message: "Summary not found" });
-    res.json(summary);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch summary" });
-  }
-}
-
 module.exports = {
   createSummaryController,
-  getSummaryByGameController,
 };
