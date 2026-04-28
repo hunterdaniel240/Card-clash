@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("student");
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
 
@@ -24,11 +25,11 @@ export default function RegisterPage() {
       name,
       email,
       password,
-      role: "student",
+      role,
     });
 
     try {
-      const user = await register(name, email, password, "student");
+      const user = await register(name, email, password, role);
       setLoading(false);
       if (user) {
         socket.connect();
@@ -40,7 +41,7 @@ export default function RegisterPage() {
     } catch (error) {
       setLoading(false);
       setErrorMessage(
-        "Registration failed. Please check your information and try again."
+        "Registration failed. Please check your information and try again.",
       );
       setShowError(true);
       console.error("Register error:", error);
@@ -134,6 +135,35 @@ export default function RegisterPage() {
                 className="w-full border-4 border-black p-4 font-bold text-black placeholder-black/30 outline-none focus:bg-cyan-50 focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all"
                 required
               />
+            </div>
+            {/* Role */}
+            <div className="space-y-2">
+              <label className="text-lg font-black uppercase text-black italic">
+                Role
+              </label>
+              <div className="flex gap-4">
+                {["student", "teacher"].map((r) => (
+                  <label
+                    key={r}
+                    className={`flex-1 flex items-center justify-center gap-3 border-4 border-black p-4 font-black uppercase cursor-pointer transition-all
+                    ${
+                      role === r
+                        ? "bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-x-1 -translate-y-1"
+                        : "bg-white hover:bg-cyan-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="role"
+                      value={r}
+                      checked={role === r}
+                      onChange={() => setRole(r)}
+                      className="accent-black w-4 h-4"
+                    />
+                    {r}
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Submit Button */}

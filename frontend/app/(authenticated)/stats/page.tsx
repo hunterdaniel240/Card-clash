@@ -52,6 +52,9 @@ export default function StatsPage() {
 
         if (user.role === "teacher") {
           const { date_from, date_to } = getDateRange(timeframe);
+          console.log("date from: " + date_from);
+          console.log("date to: " + date_to);
+
           let url = `http://localhost:5000/api/stats/teacher/${user.id}`;
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
@@ -66,6 +69,7 @@ export default function StatsPage() {
 
           const data = await response.json();
           setSummary(data.summary || null);
+          console.log("summary: " + JSON.stringify(data.summary));
 
           console.log("RAW PLAYERS DATA", data.players);
           // Chart-friendly mapping for teacher player stats:
@@ -80,6 +84,7 @@ export default function StatsPage() {
 
           setPlayerStats(mappedPlayerStats);
           setGameStats(data.questions || []);
+          console.log(JSON.stringify(data.questions));
 
           console.log("TEACHER MAPPED PLAYERSTATS", mappedPlayerStats);
         } else {
@@ -101,6 +106,7 @@ export default function StatsPage() {
           // FIXING
           const data = await response.json();
           setSummary(data.summary || null);
+          console.log("summary: " + data.summary);
           console.log("RAW GAMES DATA", data.games);
           // FIX: Map games to a chart-friendly structure for StatsChart!
           const mappedStats = (data.games || []).map((game) => ({
@@ -263,7 +269,7 @@ export default function StatsPage() {
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="font-black text-lg">
-                            Question ID: {question.question_id}
+                            Question: {question.question_text}
                           </p>
                           <p className="text-sm font-bold">
                             Responses: {question.total_responses}

@@ -77,8 +77,6 @@ class GameManager {
       game.addPlayer(new Player(socket.id, socket.userId, name, role));
       return game;
     }
-
-    // TODO handle failed to join game gracefully
   }
 
   static leaveGame(userId, join_code) {
@@ -97,7 +95,12 @@ class GameManager {
 
   static resetGame(join_code) {
     const game = games.get(join_code);
+
     if (!game) return null;
+
+    if (game.completed_previously) {
+      game.gameId = crypto.randomUUID();
+    }
 
     game.resetGameContext();
 
@@ -123,10 +126,7 @@ class GameManager {
     game.status = "in_progress";
     game.currentQuestionIndex = 0;
 
-    if (game.completed_previously) {
-      game.gameId = crypto.randomUUID();
-    }
-
+    console.log("Inserting game id to DB: " + game.gameId);
     // insert game config into db
     const dbGame = await createGameController({
       gameId: game.gameId,

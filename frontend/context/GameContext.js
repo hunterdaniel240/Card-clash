@@ -32,7 +32,7 @@ export function GameProvider({ children }) {
   const resetContext = (game) => {
     if (game) {
       console.log("resetting to game values");
-      setgameId("");
+      setgameId(game.gameId);
       setPlayers(Array.from(game.players));
       setCurrentQuestionIndex(game.currentQuestionIndex);
       setTotalQuestions(game.totalQuestions);

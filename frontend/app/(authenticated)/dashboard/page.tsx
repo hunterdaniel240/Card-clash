@@ -50,7 +50,6 @@ export default function DashboardPage() {
 
   // CONFIRM GAME SETTINGS AND CREATE GAME
   const handleConfirmGameSettings = () => {
-    // TODO handle undefined game returns
     socket.connect();
     socket.emit(
       "create-game",

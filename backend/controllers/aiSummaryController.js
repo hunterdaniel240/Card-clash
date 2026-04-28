@@ -3,6 +3,8 @@ const AISummary = require("../models/AISummary");
 // Create AI summary
 async function createSummaryController(data) {
   try {
+    console.log("Adding summary to gameId: " + data.game_id);
+
     const summary = await AISummary.createSummary(
       data.game_id,
       data.user_id,

@@ -7,10 +7,8 @@ require("dotenv").config();
 
 // Routes
 const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/userRoutes");
 const questionRoutes = require("./routes/questionRoutes");
 const gameRoutes = require("./routes/games");
-const gamePlayersRoutes = require("./routes/gamePlayers");
 const answersRoutes = require("./routes/answers");
 const aiSummaryRoutes = require("./routes/aiSummaries");
 
@@ -56,10 +54,8 @@ app.use(cookieParser()); // Cookie parsing for the token
 
 // API Route
 app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/questions", questionRoutes);
 app.use("/api", gameRoutes);
-app.use("/api/gamePlayers", gamePlayersRoutes);
 app.use("/api/answers", answersRoutes);
 app.use("/api/aiSummaries", aiSummaryRoutes);
 

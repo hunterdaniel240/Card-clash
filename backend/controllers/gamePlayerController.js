@@ -28,29 +28,6 @@ async function addPlayersController(data) {
   }
 }
 
-// Remove a player from a game
-async function removePlayerController(req, res) {
-  try {
-    const removed = await GamePlayer.removePlayer(req.params.id);
-    if (!removed) return res.status(404).json({ message: "Player not found" });
-    res.json({ message: "Player removed", player: removed });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to remove player" });
-  }
-}
-
-// Get all players in a game
-async function getPlayersByGameController(req, res) {
-  try {
-    const players = await GamePlayer.getPlayersByGame(req.params.gameId);
-    res.json(players);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to fetch players" });
-  }
-}
-
 // Update player score
 async function updatePlayerScoreController(data) {
   try {
@@ -77,7 +54,5 @@ async function updatePlayerScoreController(data) {
 
 module.exports = {
   addPlayersController,
-  removePlayerController,
-  getPlayersByGameController,
   updatePlayerScoreController,
 };

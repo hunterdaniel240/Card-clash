@@ -181,6 +181,8 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
 
   const whereSQL = `WHERE ${where.join(" AND ")}`;
 
+  console.log("where clause: " + whereSQL);
+
   // Player stats across games
   const playersResult = await pool.query(
     `
@@ -209,13 +211,15 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
     `
     SELECT
       a.question_id,
+      q.question_text,
       COUNT(*) AS total_responses,
       SUM(a.is_correct::int) AS correct_count,
       AVG(a.is_correct::int) AS accuracy
     FROM games g
     JOIN answers a ON a.game_id = g.id
+    JOIN questions q ON q.id = a.question_id
     ${whereSQL}
-    GROUP BY a.question_id
+    GROUP BY a.question_id, q.question_text
     `,
     params,
   );

@@ -1,5 +1,5 @@
 const { createUser, findUserByEmail } = require("../models/User");
-
+// TEST FOR DELETION WHOLE FILE
 async function createUserController(req, res) {
   try {
     const { name, email, password_hash, role } = req.body;
@@ -8,11 +8,10 @@ async function createUserController(req, res) {
       name,
       email,
       password_hash,
-      role
+      role,
     });
 
     res.status(201).json(user);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to create user" });
@@ -30,7 +29,6 @@ async function getUserByEmailController(req, res) {
     }
 
     res.json(user);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Database error" });
@@ -39,5 +37,5 @@ async function getUserByEmailController(req, res) {
 
 module.exports = {
   createUserController,
-  getUserByEmailController
+  getUserByEmailController,
 };

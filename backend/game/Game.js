@@ -165,8 +165,9 @@ class Game {
               })
               .map((p) => ({
                 name: p.name,
-                answer_selected: p.answer,
-                answer_text: q.options.find((o) => o.id === p.answer)?.text,
+                answer_selected: p.selected_option,
+                answer_text: q.options.find((o) => o.id === p.selected_option)
+                  ?.text,
                 correct: p.isCorrect,
               }))
           : [],
