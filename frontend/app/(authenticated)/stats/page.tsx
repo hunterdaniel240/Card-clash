@@ -52,9 +52,7 @@ export default function StatsPage() {
 
         if (user.role === "teacher") {
           const { date_from, date_to } = getDateRange(timeframe);
-
           let url = `http://localhost:5000/api/stats/teacher/${user.id}`;
-
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
           }
@@ -68,8 +66,22 @@ export default function StatsPage() {
 
           const data = await response.json();
           setSummary(data.summary || null);
-          setPlayerStats(data.players || []);
+
+          console.log("RAW PLAYERS DATA", data.players);
+          // Chart-friendly mapping for teacher player stats:
+          const mappedPlayerStats = (data.players || []).map((player) => ({
+            playerId: player.player_id ?? player.id ?? player.name ?? "",
+            playerName: player.name ?? `Player ${player.player_id ?? ""}`,
+            score: player.total_score ?? player.score ?? 0,
+            accuracy: Number(player.accuracy || 0) * 100,
+            gamesPlayed: player.total_games ?? player.gamesPlayed ?? 0,
+            avgResponseTime: player.avg_response_time ?? 0,
+          }));
+
+          setPlayerStats(mappedPlayerStats);
           setGameStats(data.questions || []);
+
+          console.log("TEACHER MAPPED PLAYERSTATS", mappedPlayerStats);
         } else {
           const { date_from, date_to } = getDateRange(timeframe);
 
@@ -88,8 +100,8 @@ export default function StatsPage() {
 
           // FIXING
           const data = await response.json();
-          console.log(data);
           setSummary(data.summary || null);
+          console.log("RAW GAMES DATA", data.games);
           // FIX: Map games to a chart-friendly structure for StatsChart!
           const mappedStats = (data.games || []).map((game) => ({
             playerId: game.game_id,
@@ -101,6 +113,9 @@ export default function StatsPage() {
                 : 0,
             gamesPlayed: 1,
             avgResponseTime: game.avg_response_time ?? 0,
+            total_answers: game.total_answers,
+            correct: game.correct,
+            ended_at: game.ended_at,
           }));
           setPlayerStats(mappedStats);
           setGameStats(mappedStats);
@@ -273,27 +288,24 @@ export default function StatsPage() {
                   Game History
                 </h2>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {gameStats.map((game) => {
-                    console.log("gamestats" + JSON.stringify(game));
-                    return (
-                      <div
-                        key={game.game_id}
-                        className="border-4 border-black p-4"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-black text-lg">
-                              {new Date(game.ended_at).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm font-bold">
-                              Correct: {game.correct} / {game.total_answers}
-                            </p>
-                          </div>
-                          <p className="font-black text-xl">{game.score}</p>
+                  {gameStats.map((game) => (
+                    <div
+                      key={game.game_id}
+                      className="border-4 border-black p-4"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-black text-lg">
+                            {new Date(game.ended_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm font-bold">
+                            Correct: {game.correct} / {game.total_answers}
+                          </p>
                         </div>
+                        <p className="font-black text-xl">{game.score}</p>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

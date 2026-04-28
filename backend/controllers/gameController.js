@@ -173,6 +173,24 @@ async function getStudentStatsByDateController(req, res) {
   }
 }
 
+async function getStudentStatsByDateController(req, res) {
+  const { userId } = req.params;
+  const { date_from, date_to } = req.query;
+
+  try {
+    const data = await gameService.getStudentStatsByDate(
+      userId,
+      date_from,
+      date_to
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+}
+
 module.exports = {
   createGameController,
   deleteGameController,
@@ -183,4 +201,5 @@ module.exports = {
   getGameStatsController,
   getStudentStatsByDateController,
   getTeacherStatsByDateController,
+  getStudentStatsByDateController,
 };
