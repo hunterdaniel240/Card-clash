@@ -66,8 +66,6 @@ export default function DashboardPage() {
           return;
         }
 
-        console.log("Game created: " + game.gameId + "\n");
-        console.log(JSON.stringify(game));
         setgameId(game.gameId);
         setisHost(true);
         setSettings(game.settings);
@@ -95,8 +93,6 @@ export default function DashboardPage() {
     e.preventDefault();
 
     socket.connect();
-
-    console.log("user joining: " + user);
 
     socket.emit(
       "join-game",

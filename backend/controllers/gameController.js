@@ -134,9 +134,6 @@ async function getTeacherStatsByDateController(req, res) {
   const { userId } = req.params;
   const { date_from, date_to } = req.query;
 
-  console.log("user: " + userId);
-  console.log("date from: " + date_from);
-  console.log("date_to: " + date_to);
   try {
     const data = await gameService.getTeacherStatsByDate(
       userId,
@@ -155,10 +152,6 @@ async function getStudentStatsByDateController(req, res) {
   const { userId } = req.params;
   const { date_from, date_to } = req.query;
 
-  console.log("user: " + userId);
-  console.log("date from: " + date_from);
-  console.log("date_to: " + date_to);
-
   try {
     const data = await gameService.getStudentStatsByDate(
       userId,
@@ -181,7 +174,7 @@ async function getStudentStatsByDateController(req, res) {
     const data = await gameService.getStudentStatsByDate(
       userId,
       date_from,
-      date_to
+      date_to,
     );
 
     res.json(data);

@@ -16,8 +16,6 @@ export default function GameSettingsModal({
       ...prev,
       [name]: type === "checkbox" ? checked : Number(value),
     }));
-
-    console.log(modalSettings);
   };
 
   const handleSaveSettings = () => {

@@ -20,8 +20,6 @@ async function generateStudentFeedback(summary, studentName) {
     return "You answered all questions correctly!";
   }
 
-  console.log("use for prompt: " + JSON.stringify(studentQuestions));
-
   const prompt = `You are an educational assistant helping a student improve after a trivia game.
 
     Analyze ONLY the questions the student got wrong.

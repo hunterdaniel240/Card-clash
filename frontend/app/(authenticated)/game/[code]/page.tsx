@@ -43,7 +43,6 @@ export default function ActiveGamePage() {
   // Submit answer
   function submitAnswer(optionId: any) {
     if (answered) return;
-    console.log(user?.id + " submitting answer " + optionId);
     socket.emit("submit-answer", { join_code, answer: optionId });
     setAnswered(true);
     setplayerAnswer(optionId);
@@ -57,7 +56,6 @@ export default function ActiveGamePage() {
     socket.emit("game-page-ready", { join_code });
 
     socket.on("question-start", (data) => {
-      console.log("question: " + data.question);
       clearInterval(timerRef.current);
       setQuestion(data.question);
       setplayerAnswer("");
@@ -71,7 +69,6 @@ export default function ActiveGamePage() {
     });
 
     socket.on("question-end", (data) => {
-      console.log("question ended: " + JSON.stringify(data));
       clearInterval(timerRef.current);
       setLeaderboard(data.scores);
       setCorrectAnswer({
@@ -81,7 +78,6 @@ export default function ActiveGamePage() {
       setQuestion(null);
       setWaiting(true);
       if (currentQuestionIndexRef.current == totalQuestions) {
-        console.log("game end");
         setGameOver(true);
       }
 

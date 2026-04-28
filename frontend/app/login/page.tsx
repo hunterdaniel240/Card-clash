@@ -18,7 +18,6 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    console.log("Login Attempt:", { email, password });
 
     try {
       const user = await login(email, password);
@@ -32,7 +31,9 @@ export default function LoginPage() {
       }
     } catch (error) {
       setLoading(false);
-      setErrorMessage("Login failed. Please check your credentials and try again.");
+      setErrorMessage(
+        "Login failed. Please check your credentials and try again.",
+      );
       setShowError(true);
       console.error("Login error:", error);
     }

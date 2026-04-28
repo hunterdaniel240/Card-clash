@@ -5,7 +5,7 @@ import Chart from "chart.js/auto";
 
 interface PlayerStats {
   playerId: string;
-  playerName: string;
+  chartLabel: string;
   score: number;
   accuracy: number;
   gamesPlayed: number;
@@ -37,7 +37,7 @@ export default function StatsChart({
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
 
-    const labels = data.map((stat) => stat.playerName);
+    const labels = data.map((stat) => stat.chartLabel);
     const values = data.map((stat) =>
       type === "scores" ? stat.score : stat.accuracy,
     );

@@ -31,7 +31,6 @@ export function GameProvider({ children }) {
 
   const resetContext = (game) => {
     if (game) {
-      console.log("resetting to game values");
       setgameId(game.gameId);
       setPlayers(Array.from(game.players));
       setCurrentQuestionIndex(game.currentQuestionIndex);
@@ -42,8 +41,6 @@ export function GameProvider({ children }) {
       setJoin_code(game.join_code);
       setStatus(game.status);
     } else {
-      console.log("resetting to default values");
-
       setgameId("");
       setisHost(false);
       setPlayers([]);
@@ -59,7 +56,6 @@ export function GameProvider({ children }) {
 
   useEffect(() => {
     socket.on("game-reset", ({ game }) => {
-      console.log("Game reset received");
       resetContext(game);
     });
 

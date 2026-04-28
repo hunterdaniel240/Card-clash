@@ -21,12 +21,6 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    console.log("Register attempt:", {
-      name,
-      email,
-      password,
-      role,
-    });
 
     try {
       const user = await register(name, email, password, role);

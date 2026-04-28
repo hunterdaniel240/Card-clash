@@ -119,7 +119,6 @@ export default function LobbyPage() {
   const handleStartGame = () => {
     // conditional checks to verify game is ready to start
     if (questionsSelected.length === 0) {
-      console.log("no questions added, unable to start game");
       setErrorMessage("Please select at least one question to start the game.");
       setShowError(true);
       return;
@@ -127,7 +126,6 @@ export default function LobbyPage() {
 
     if (players.length === 0) {
       // TODO: change this to be more than 2 players: length > 1 as teacher isn't pulled
-      console.log("only host in game. Need atleast 1 student to start");
       setErrorMessage("At least 2 players are required to start the game.");
       setShowError(true);
       return;

@@ -54,8 +54,7 @@ class GameManager {
       // host left, but game never started. This should never occur, but if anything weird happens this is a safety deletion
       if (game.status == "lobby") {
         const deletedGame = deleteGameController(game.gameId);
-        console.log("deleted game: " + deletedGame);
-        console.log("game deleted from DB");
+        console.log("deleted game from DB: " + deletedGame);
       }
     }
   }
@@ -126,7 +125,6 @@ class GameManager {
     game.status = "in_progress";
     game.currentQuestionIndex = 0;
 
-    console.log("Inserting game id to DB: " + game.gameId);
     // insert game config into db
     const dbGame = await createGameController({
       gameId: game.gameId,
@@ -140,8 +138,9 @@ class GameManager {
       console.log("Failed to add game to the DB.");
       GameManager.deleteGame(socket.userId, join_code);
       return null;
+    } else {
+      console.log(game.gameId + " Added game to DB.");
     }
-    console.log("Added game to DB");
 
     const dbGamePlayers = await addPlayersController({
       gameId: game.gameId,

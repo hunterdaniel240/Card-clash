@@ -64,7 +64,6 @@ export default function PostGamePage() {
       if (!res.ok) throw new Error("Failed to fetch student feedback");
 
       const data = await res.json();
-      console.log(JSON.stringify(data));
 
       setStudentAISummary(data.summary || "");
     } catch (err) {
@@ -90,7 +89,6 @@ export default function PostGamePage() {
       if (!res.ok) throw new Error("Failed to fetch teacher feedback");
 
       const data = await res.json();
-      console.log(JSON.stringify(data));
       setTeacherAISummary(data.summary || "");
     } catch (error) {
       console.error("Error fetching teacher feedback:", error);
@@ -122,8 +120,6 @@ export default function PostGamePage() {
           router.push(`/lobby/${game.join_code}`);
         } else {
           if (!waitingOnHostRef.current) return;
-
-          console.log("game not ready");
 
           setTimeout(() => {
             joinLobby();

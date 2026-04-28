@@ -12,6 +12,7 @@ export default function StatsPage() {
 
   const [loading, setLoading] = useState(true);
   const [gameStats, setGameStats] = useState<any[]>([]);
+  const [questionsStats, setQuestionsStats] = useState<any[]>([]);
   const [playerStats, setPlayerStats] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [timeframe, setTimeframe] = useState("all");
@@ -51,9 +52,8 @@ export default function StatsPage() {
         }
 
         if (user.role === "teacher") {
+          // TEACHER STATS
           const { date_from, date_to } = getDateRange(timeframe);
-          console.log("date from: " + date_from);
-          console.log("date to: " + date_to);
 
           let url = `http://localhost:5000/api/stats/teacher/${user.id}`;
           if (date_from && date_to) {
@@ -69,25 +69,22 @@ export default function StatsPage() {
 
           const data = await response.json();
           setSummary(data.summary || null);
-          console.log("summary: " + JSON.stringify(data.summary));
 
-          console.log("RAW PLAYERS DATA", data.players);
           // Chart-friendly mapping for teacher player stats:
           const mappedPlayerStats = (data.players || []).map((player) => ({
-            playerId: player.player_id ?? player.id ?? player.name ?? "",
-            playerName: player.name ?? `Player ${player.player_id ?? ""}`,
-            score: player.total_score ?? player.score ?? 0,
+            playerId: player.id ?? "",
+            chartLabel: player.name ?? `Player ${player.player_id ?? ""}`,
+            score: Number(player.avg_score ?? 0),
             accuracy: Number(player.accuracy || 0) * 100,
-            gamesPlayed: player.total_games ?? player.gamesPlayed ?? 0,
+            gamesPlayed: Number(player.total_games ?? 0),
             avgResponseTime: player.avg_response_time ?? 0,
           }));
 
           setPlayerStats(mappedPlayerStats);
-          setGameStats(data.questions || []);
-          console.log(JSON.stringify(data.questions));
-
-          console.log("TEACHER MAPPED PLAYERSTATS", mappedPlayerStats);
+          setQuestionsStats(data.questions);
+          setGameStats(data.games || []);
         } else {
+          // STUDENT STATS
           const { date_from, date_to } = getDateRange(timeframe);
 
           let url = `http://localhost:5000/api/stats/student/${user.id}`;
@@ -103,15 +100,13 @@ export default function StatsPage() {
 
           if (!response.ok) throw new Error("Failed to load student stats");
 
-          // FIXING
           const data = await response.json();
+
           setSummary(data.summary || null);
-          console.log("summary: " + data.summary);
-          console.log("RAW GAMES DATA", data.games);
-          // FIX: Map games to a chart-friendly structure for StatsChart!
+
           const mappedStats = (data.games || []).map((game) => ({
-            playerId: game.game_id,
-            playerName: game.name ?? `Game ${game.game_id.slice(0, 4)}`,
+            gameId: game.game_id,
+            chartLabel: `Game ID: ${game.game_id.slice(0, 4)}`,
             score: game.score,
             accuracy:
               game.total_answers && game.correct != null
@@ -122,10 +117,10 @@ export default function StatsPage() {
             total_answers: game.total_answers,
             correct: game.correct,
             ended_at: game.ended_at,
+            questions: game.questions,
           }));
           setPlayerStats(mappedStats);
           setGameStats(mappedStats);
-          console.log("MAPPED STATS FOR CHART:", mappedStats);
         }
       } catch (error) {
         console.error("Failed to fetch stats:", error);
@@ -241,7 +236,7 @@ export default function StatsPage() {
               <div className="border-4 border-black p-6 bg-yellow-100">
                 <h2 className="text-2xl font-black uppercase italic text-black mb-4">
                   {user?.role === "teacher"
-                    ? "Player Scores"
+                    ? "Average Player Scores"
                     : "Scores by Game"}
                 </h2>
                 <StatsChart data={playerStats} type="scores" height={400} />
@@ -255,13 +250,13 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {user?.role === "teacher" && gameStats.length > 0 && (
+            {user?.role === "teacher" && questionsStats.length > 0 && (
               <div className="border-4 border-black p-6 bg-white">
                 <h2 className="text-2xl font-black uppercase italic text-black mb-4">
                   Question Performance
                 </h2>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {gameStats.map((question) => (
+                  {questionsStats.map((question) => (
                     <div
                       key={question.question_id}
                       className="border-4 border-black p-4"
@@ -288,30 +283,18 @@ export default function StatsPage() {
               </div>
             )}
 
-            {user?.role === "student" && gameStats.length > 0 && (
+            {gameStats.length > 0 && (
               <div className="border-4 border-black p-6 bg-white">
                 <h2 className="text-2xl font-black uppercase italic text-black mb-4">
                   Game History
                 </h2>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                  {gameStats.map((game) => (
-                    <div
-                      key={game.game_id}
-                      className="border-4 border-black p-4"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-black text-lg">
-                            {new Date(game.ended_at).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm font-bold">
-                            Correct: {game.correct} / {game.total_answers}
-                          </p>
-                        </div>
-                        <p className="font-black text-xl">{game.score}</p>
-                      </div>
-                    </div>
-                  ))}
+                  {gameStats.map((game) => {
+                    if (user.role == "student")
+                      return <StudentGameRow key={game.game_id} game={game} />;
+                    else
+                      return <TeacherGameRow key={game.game_id} game={game} />;
+                  })}
                 </div>
               </div>
             )}
@@ -330,5 +313,157 @@ export default function StatsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+function StudentGameRow({ game }: { game: (typeof gameStats)[0] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-4 border-black">
+      {/* Header row — click to toggle */}
+      <div
+        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <div>
+          <p className="font-black text-lg">
+            {new Date(game.ended_at).toLocaleDateString()}
+          </p>
+          <p className="text-sm font-bold">
+            Correct: {game.correct} / {game.total_answers}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="font-black text-xl">{game.score}</p>
+          <span className="font-black text-lg">{open ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Questions dropdown */}
+      {open && (
+        <div className="border-t-4 border-black divide-y-2 divide-black">
+          {game.questions?.length ? (
+            game.questions.map((q, i) => (
+              <div key={q.question_id} className="p-4 bg-gray-50">
+                <p className="font-black text-sm mb-2">
+                  Q{i + 1}: {q.question_text}
+                </p>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {(["a", "b", "c", "d"] as const).map((opt) => {
+                    const text = q.options[opt];
+                    if (!text) return null;
+                    const isSelected = q.selected_option?.toLowerCase() === opt;
+                    const isCorrect = q.correct_answer?.toLowerCase() === opt;
+
+                    return (
+                      <div
+                        key={opt}
+                        className={`border-2 border-black p-2 text-sm font-bold flex items-center gap-2
+                          ${isSelected && isCorrect ? "bg-green-300" : ""}
+                          ${isSelected && !isCorrect ? "bg-red-300" : ""}
+                          ${!isSelected && isCorrect ? "bg-green-100" : ""}
+                        `}
+                      >
+                        <span className="uppercase font-black">{opt}.</span>
+                        {text}
+                        {isSelected && (
+                          <span className="ml-auto">
+                            {isCorrect ? "✓" : "X"}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {!q.selected_option && (
+                  <p className="text-xs font-bold text-gray-500 italic">
+                    Not answered
+                  </p>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="p-4 text-sm font-bold text-gray-500 italic">
+              No question data available.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TeacherGameRow({ game }: { game: (typeof gameStats)[0] }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-4 border-black">
+      <div
+        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <div>
+          <p className="font-black text-lg">
+            {new Date(game.ended_at).toLocaleDateString()}
+          </p>
+          <p className="text-sm font-bold">
+            Code: {game.join_code} &nbsp;·&nbsp; Players: {game.total_players}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-sm font-bold">
+              Avg Score: {Number(game.avg_score).toFixed(0)}
+            </p>
+            <p className="text-sm font-bold">
+              Accuracy: {(Number(game.accuracy) * 100).toFixed(1)}%
+            </p>
+          </div>
+          <span className="font-black text-lg">{open ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {open && (
+        <div className="border-t-4 border-black divide-y-2 divide-black">
+          {game.questions?.length ? (
+            game.questions.map((q, i) => (
+              <div key={q.question_id} className="p-4 bg-gray-50">
+                <p className="font-black text-sm mb-1">
+                  Q{i + 1}: {q.question_text}
+                </p>
+                <p className="text-xs font-bold text-gray-600 mb-3">
+                  {q.correct_count} / {q.total_responses} correct{" | "}
+                  {(Number(q.accuracy) * 100).toFixed(1)}% accuracy
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["a", "b", "c", "d"] as const).map((opt) => {
+                    const text = q[`option_${opt}`];
+                    if (!text) return null;
+                    const isCorrect = q.correct_answer?.toLowerCase() === opt;
+                    return (
+                      <div
+                        key={opt}
+                        className={`border-2 border-black p-2 text-sm font-bold flex items-center gap-2
+                          ${isCorrect ? "bg-green-200" : ""}
+                        `}
+                      >
+                        <span className="uppercase font-black">{opt}.</span>
+                        {text}
+                        {isCorrect && <span className="ml-auto">✓</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="p-4 text-sm font-bold text-gray-500 italic">
+              No question data available.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

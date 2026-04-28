@@ -113,7 +113,6 @@ function UserDisconnectingOn(socket) {
           LobbyUpdateEmit(room, updatedGame);
         }
       }
-      console.log("user disconnected from game");
     });
   });
 }
