@@ -3,24 +3,25 @@ const OpenAi = require("openai");
 const client = new OpenAi();
 
 async function generateStudentFeedback(summary, studentName) {
-  const filtered = summary.filter((q) =>
-    q.players.some((p) => p.name === studentName && !p.correct),
-  );
+  try {
+    const filtered = summary.filter((q) =>
+      q.players.some((p) => p.name === studentName && !p.correct),
+    );
 
-  const studentQuestions = filtered.map((q) => {
-    const student = q.players.find((p) => p.name === studentName);
-    return {
-      question: q.question_text,
-      correctAnswer: `${q.correct_option}: ${q.options[q.correct_option]}`,
-      studentAnswer: `${student.answer_selected}: ${q.options[student.answer_selected]}`,
-    };
-  });
+    const studentQuestions = filtered.map((q) => {
+      const student = q.players.find((p) => p.name === studentName);
+      return {
+        question: q.question_text,
+        correctAnswer: `${q.correct_option}: ${q.options[q.correct_option]}`,
+        studentAnswer: `${student.answer_selected}: ${q.options[student.answer_selected]}`,
+      };
+    });
 
-  if (studentQuestions.length === 0) {
-    return "You answered all questions correctly!";
-  }
+    if (studentQuestions.length === 0) {
+      return "You answered all questions correctly!";
+    }
 
-  const prompt = `You are an educational assistant helping a student improve after a trivia game.
+    const prompt = `You are an educational assistant helping a student improve after a trivia game.
 
     Analyze ONLY the questions the student got wrong.
 
@@ -55,16 +56,21 @@ async function generateStudentFeedback(summary, studentName) {
     - ...
     `;
 
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: prompt,
-  });
-  // response.output[0].content[0].text
-  return response.output_text;
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: prompt,
+    });
+    // response.output[0].content[0].text
+    return response.output_text;
+  } catch (error) {
+    console.error("AI unavailable: ", error);
+    throw new Error("AI service is unavailable.");
+  }
 }
 
 async function generateTeacherFeedback(summary) {
-  const prompt = `
+  try {
+    const prompt = `
     You are an assistant helping a teacher analyze class performance from a trivia game.
 
     Analyze the data and provide:
@@ -97,12 +103,15 @@ async function generateTeacherFeedback(summary) {
     - ...
     `;
 
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: prompt,
-  });
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini",
+      input: prompt,
+    });
 
-  return response.output_text;
+    return response.output_text;
+  } catch (error) {
+    throw new Error("AI service is unavailable.");
+  }
 }
 
 module.exports = { generateStudentFeedback, generateTeacherFeedback };

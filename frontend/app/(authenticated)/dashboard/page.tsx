@@ -50,6 +50,12 @@ export default function DashboardPage() {
 
   // CONFIRM GAME SETTINGS AND CREATE GAME
   const handleConfirmGameSettings = () => {
+    const safeSettings = {
+      ...gameSettings,
+      timePerQuestion: clampSetting(gameSettings.timePerQuestion, 5, 120),
+      maxPlayers: clampSetting(gameSettings.maxPlayers, 2, 50),
+    };
+
     socket.connect();
     socket.emit(
       "create-game",
@@ -87,6 +93,13 @@ export default function DashboardPage() {
       ...gameSettings,
       [field]: value,
     });
+  };
+
+  // Game settings number validation
+  const clampSetting = (value, min, max) => {
+    if (isNaN(value) || value < min) return min;
+    if (value > max) return max;
+    return value;
   };
 
   const handleJoinLobby = (e: React.FormEvent) => {
@@ -295,6 +308,12 @@ export default function DashboardPage() {
                           parseInt(e.target.value),
                         )
                       }
+                      onBlur={(e) =>
+                        handleGameSettingChange(
+                          "timePerQuestion",
+                          clampSetting(e.target.value, 5, 120),
+                        )
+                      }
                       className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                     />
                   </div>
@@ -313,6 +332,12 @@ export default function DashboardPage() {
                         handleGameSettingChange(
                           "maxPlayers",
                           parseInt(e.target.value),
+                        )
+                      }
+                      onBlur={(e) =>
+                        handleGameSettingChange(
+                          "maxPlayers",
+                          clampSetting(e.target.value, 2, 50),
                         )
                       }
                       className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"

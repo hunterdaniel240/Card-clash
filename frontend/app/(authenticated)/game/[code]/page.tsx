@@ -87,6 +87,7 @@ export default function ActiveGamePage() {
     socket.once("game-end", (data) => {
       clearInterval(timerRef.current);
       setGameOver(true);
+      setTimeLeft(null);
 
       setLeaderboard(data.finalScores);
       setQuestionsSummary(data.questionsSummary);
@@ -180,7 +181,7 @@ export default function ActiveGamePage() {
 
                       return (
                         <div
-                          key={p.id}
+                          key={p.userId}
                           className="flex justify-between border-4 border-black p-3 font-black text-lg"
                         >
                           <span>

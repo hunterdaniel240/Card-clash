@@ -19,8 +19,9 @@ Card Clash is a multiplayer classroom quiz platform inspired by Kahoot. Teachers
 1. Open two terminal windows
 2. In one terminal, cd /frontend
 3. In the second terminal, cd /backend
-4. In both terminals, npm run dev
-5. enter "http://localhost:3000/" in your browser
+4. In both terminals, npm i
+5. In both terminals, npm run dev
+6. enter "http://localhost:3000/" in your browser
 
 ---
 

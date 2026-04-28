@@ -61,9 +61,11 @@ export default function PostGamePage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to fetch student feedback");
-
       const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Could not load teacher feedback");
+        return;
+      }
 
       setStudentAISummary(data.summary || "");
     } catch (err) {
@@ -86,12 +88,14 @@ export default function PostGamePage() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to fetch teacher feedback");
-
       const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Could not load teacher feedback");
+        return;
+      }
+
       setTeacherAISummary(data.summary || "");
     } catch (error) {
-      console.error("Error fetching teacher feedback:", error);
       setError("Could not load teacher feedback");
     } finally {
       setLoading(false);

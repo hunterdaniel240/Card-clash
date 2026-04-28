@@ -187,8 +187,6 @@ CREATE TABLE answers (
 
     is_correct BOOLEAN NOT NULL,
 
-    response_time_ms INTEGER NOT NULL,
-
     answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_player_answer
@@ -218,6 +216,10 @@ CREATE TABLE ai_summaries (
 
     game_id INTEGER NOT NULL
         REFERENCES games(id)
+        ON DELETE CASCADE,
+
+    user_id INTEGER NOT NULL
+        REFERENCES users(id)
         ON DELETE CASCADE,
 
     summary_text TEXT NOT NULL,
