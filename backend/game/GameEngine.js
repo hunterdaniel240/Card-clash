@@ -30,6 +30,10 @@ async function runGameLoop(socketIo, game) {
     const questionStartTime = Date.now();
     await waitForAnswers(game, game.settings.timePerQuestion * 1000);
 
+    if (game.status !== "in_progress") {
+      break; // host dropped mid question, break to avoid grading and recording unanswered questions
+    }
+
     // determine which players answered correctly, apply points to the players
     game.gradeAnswers(questionStartTime);
 
@@ -45,42 +49,51 @@ async function runGameLoop(socketIo, game) {
     game.currentQuestionIndex++;
     if (game.currentQuestionIndex == game.totalQuestions) break;
     await sleep(timeBetweenQuestions * 1000);
+
+    if (game.status !== "in_progress") {
+      break; // host dropped post question, avoid next round kicking off
+    }
   }
 
-  game.completed_previously = true;
+  if (game.status === "in_progress") {
+    game.completed_previously = true;
 
-  if (game.settings.showAnswer && game.readyPlayers.size != 1) {
-    await sleep(timeBetweenQuestions * 1000);
+    if (game.settings.showAnswer && game.readyPlayers.size != 1) {
+      await sleep(timeBetweenQuestions * 1000);
+    }
+
+    // record all question answers to history
+    const answersDb_result = await uploadAnswersController({
+      gameId: game.gameId,
+      join_code: join_code,
+      answerHistory: game.answerHistory,
+    });
+
+    // record all scores to history
+    const scoreDb_result = await updatePlayerScoreController({
+      gameId: game.gameId,
+      join_code: join_code,
+      scores: game.getPlayers(),
+    });
+
+    const { questionsSummary, winners } = await GameManager.endGame(game);
+
+    // all questions cleared, send summary and final leaderboard
+    socketIo.to(join_code).emit("game-end", {
+      finalScores: game.getScores(),
+      questionsSummary,
+      winners,
+    });
   }
-
-  // record all question answers to history
-  const answersDb_result = await uploadAnswersController({
-    gameId: game.gameId,
-    join_code: join_code,
-    answerHistory: game.answerHistory,
-  });
-
-  // record all scores to history
-  const scoreDb_result = await updatePlayerScoreController({
-    gameId: game.gameId,
-    join_code: join_code,
-    scores: game.getPlayers(),
-  });
-
-  const { questionsSummary, winners } = await GameManager.endGame(game);
-
-  // all questions cleared, send summary and final leaderboard
-  socketIo.to(join_code).emit("game-end", {
-    finalScores: game.getScores(),
-    questionsSummary,
-    winners,
-  });
 }
 
 async function waitForAnswers(game, timeLimit) {
   const start = Date.now();
 
   while (Date.now() - start < timeLimit) {
+    if (game.status !== "in_progress") {
+      break; // host dropped mid game
+    }
     if (game.allPlayersAnswered()) {
       break;
     }

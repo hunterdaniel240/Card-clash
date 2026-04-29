@@ -12,11 +12,13 @@ const AISummary = {
     return result;
   },
 
-  async getSummaryByGame(gameId) {
+  async getSummaryByGame(game_id, user_id) {
     const result = await db.query(
-      `SELECT * FROM AI_Summaries
-       WHERE game_id=$1`,
-      [gameId],
+      `SELECT summary_text FROM ai_summaries 
+       WHERE game_id = $1 AND user_id = $2 
+       ORDER BY generated_at DESC 
+       LIMIT 1`,
+      [game_id, user_id],
     );
 
     return result.rows[0];

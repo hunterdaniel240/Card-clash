@@ -49,13 +49,13 @@ class GameManager {
     const game = games.get(join_code);
 
     if (game && game.hostId === userId) {
-      games.delete(join_code);
-
-      // host left, but game never started. This should never occur, but if anything weird happens this is a safety deletion
-      if (game.status == "lobby") {
+      if (game.status !== "finished") {
+        // game ended before finishing, delete from DB
         const deletedGame = deleteGameController(game.gameId);
         console.log("deleted game from DB: " + deletedGame);
       }
+
+      games.delete(join_code); // remove from memory
     }
   }
 

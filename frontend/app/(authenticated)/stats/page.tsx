@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import StatsChart from "@/components/StatsChart";
@@ -105,7 +105,7 @@ export default function StatsPage() {
           setSummary(data.summary || null);
 
           const mappedStats = (data.games || []).map((game) => ({
-            gameId: game.game_id,
+            game_id: game.game_id,
             chartLabel: `Game ID: ${game.game_id.slice(0, 4)}`,
             score: game.score,
             accuracy:
@@ -291,9 +291,21 @@ export default function StatsPage() {
                 <div className="space-y-3 max-h-[400px] overflow-y-auto">
                   {gameStats.map((game) => {
                     if (user.role == "student")
-                      return <StudentGameRow key={game.game_id} game={game} />;
+                      return (
+                        <StudentGameRow
+                          key={game.game_id}
+                          game={game}
+                          userId={user.id}
+                        />
+                      );
                     else
-                      return <TeacherGameRow key={game.game_id} game={game} />;
+                      return (
+                        <TeacherGameRow
+                          key={game.game_id}
+                          game={game}
+                          userId={user.id}
+                        />
+                      );
                   })}
                 </div>
               </div>
@@ -316,15 +328,43 @@ export default function StatsPage() {
   );
 }
 
-function StudentGameRow({ game }: { game: (typeof gameStats)[0] }) {
+function StudentGameRow({
+  game,
+  userId,
+}: {
+  game: (typeof gameStats)[0];
+  userId: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const hasFetchedSummary = useRef(false);
+
+  const handleToggle = async () => {
+    setOpen((prev) => !prev);
+
+    if (!hasFetchedSummary.current) {
+      hasFetchedSummary.current = true;
+      setSummaryLoading(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DEV_SERVER_URL}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
+        );
+        const data = await res.json();
+        setSummary(data.summary_text || null);
+      } catch {
+        setSummary(null);
+      } finally {
+        setSummaryLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="border-4 border-black">
-      {/* Header row — click to toggle */}
       <div
         className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={handleToggle}
       >
         <div>
           <p className="font-black text-lg">
@@ -340,9 +380,25 @@ function StudentGameRow({ game }: { game: (typeof gameStats)[0] }) {
         </div>
       </div>
 
-      {/* Questions dropdown */}
       {open && (
         <div className="border-t-4 border-black divide-y-2 divide-black">
+          {/* AI Summary Section */}
+          <div className="p-4 bg-purple-50">
+            <p className="font-black text-sm uppercase mb-2">AI Feedback</p>
+            {summaryLoading ? (
+              <p className="text-sm font-bold text-gray-500 animate-pulse">
+                Loading feedback...
+              </p>
+            ) : summary ? (
+              <p className="text-sm font-bold whitespace-pre-wrap">{summary}</p>
+            ) : (
+              <p className="text-sm font-bold text-gray-500 italic">
+                No feedback available for this game.
+              </p>
+            )}
+          </div>
+
+          {/* Questions */}
           {game.questions?.length ? (
             game.questions.map((q, i) => (
               <div key={q.question_id} className="p-4 bg-gray-50">
@@ -394,14 +450,43 @@ function StudentGameRow({ game }: { game: (typeof gameStats)[0] }) {
   );
 }
 
-function TeacherGameRow({ game }: { game: (typeof gameStats)[0] }) {
+function TeacherGameRow({
+  game,
+  userId,
+}: {
+  game: (typeof gameStats)[0];
+  userId: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const hasFetchedSummary = useRef(false);
+
+  const handleToggle = async () => {
+    setOpen((prev) => !prev);
+
+    if (!hasFetchedSummary.current) {
+      hasFetchedSummary.current = true;
+      setSummaryLoading(true);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_DEV_SERVER_URL}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
+        );
+        const data = await res.json();
+        setSummary(data.summary_text || null);
+      } catch {
+        setSummary(null);
+      } finally {
+        setSummaryLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="border-4 border-black">
       <div
         className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={handleToggle}
       >
         <div>
           <p className="font-black text-lg">
@@ -426,6 +511,25 @@ function TeacherGameRow({ game }: { game: (typeof gameStats)[0] }) {
 
       {open && (
         <div className="border-t-4 border-black divide-y-2 divide-black">
+          {/* AI Summary Section */}
+          <div className="p-4 bg-purple-50">
+            <p className="font-black text-sm uppercase mb-2">
+              AI Class Summary
+            </p>
+            {summaryLoading ? (
+              <p className="text-sm font-bold text-gray-500 animate-pulse">
+                Loading summary...
+              </p>
+            ) : summary ? (
+              <p className="text-sm font-bold whitespace-pre-wrap">{summary}</p>
+            ) : (
+              <p className="text-sm font-bold text-gray-500 italic">
+                No summary available for this game.
+              </p>
+            )}
+          </div>
+
+          {/* Questions */}
           {game.questions?.length ? (
             game.questions.map((q, i) => (
               <div key={q.question_id} className="p-4 bg-gray-50">

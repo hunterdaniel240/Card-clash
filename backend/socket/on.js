@@ -52,6 +52,14 @@ function KickPlayerOn(socket) {
 
     if (game.hostId !== socket.userId) return;
 
+    const targetSocket = [...socket.server.sockets.sockets.values()].find(
+      (s) => s.userId === target_id,
+    );
+
+    if (targetSocket) {
+      targetSocket.emit("kicked");
+    }
+
     GameManager.leaveGame(target_id, join_code);
 
     const updatedGame = GameManager.getGame(join_code);
@@ -60,14 +68,6 @@ function KickPlayerOn(socket) {
       LobbyUpdateEmit(join_code, updatedGame);
     } else {
       LobbyClosedEmit(join_code);
-    }
-
-    const targetSocket = [...socket.server.sockets.sockets.values()].find(
-      (s) => s.userId === target_id,
-    );
-
-    if (targetSocket) {
-      targetSocket.emit("kicked");
     }
   });
 }
@@ -92,17 +92,23 @@ function UserDisconnectingOn(socket) {
 
       // This function gives host a few seconds to reconnect or if the user is a student then disconnect them
       if (game.hostId === socket.userId) {
+        const tempUserId = socket.userId;
+        if (game.status === "in_progress") {
+          game.status = "host_disconnected"; // temp status
+        }
         getSocketIo().to(room).emit("host-disconnected");
 
         setTimeout(() => {
           const gone = !getSocketIo().sockets.sockets.get(socket.userId);
           if (gone) {
-            GameManager.leaveGame(socket, room);
+            GameManager.leaveGame(tempUserId, room);
 
             getSocketIo()
               .to(room)
               .emit("game-terminated", { reason: "Host has disconnected" });
           } else {
+            game.status = "in_progress";
+
             getSocketIo().to(room).emit("host-reconnected");
           }
         }, 10000);

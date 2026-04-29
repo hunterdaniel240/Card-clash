@@ -5,6 +5,7 @@ const {
   generateStudentFeedback,
   generateTeacherFeedback,
 } = require("../services/aiSummaryService");
+const AISummary = require("../models/AISummary");
 
 // ai calls
 router.post("/student", async (req, res) => {
@@ -42,6 +43,24 @@ router.post("/teacher", async (req, res) => {
   } catch (error) {
     console.error("AI unavailable: ", error);
     res.status(500).json({ error: "AI service unavailable" });
+  }
+});
+
+router.get("/", async (req, res) => {
+  try {
+    const { game_id, user_id } = req.query;
+    if (!game_id || !user_id) {
+      return res
+        .status(400)
+        .json({ error: "game_id and user_id are required" });
+    }
+
+    const result = await AISummary.getSummaryByGame(game_id, user_id);
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching AI summary:", err);
+    res.status(500).json({ error: "Failed to fetch summary" });
   }
 });
 module.exports = router;
