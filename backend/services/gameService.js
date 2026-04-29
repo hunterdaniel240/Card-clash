@@ -46,7 +46,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
       SELECT
         game_id,
         COUNT(DISTINCT user_id) AS total_players,
-        AVG(score) AS avg_score
+        AVG(DISTINCT score) AS avg_score
       FROM game_players
       GROUP BY game_id
     ) gp_agg ON gp_agg.game_id = g.id
@@ -76,7 +76,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
       u.id,
       u.name,
       COUNT(DISTINCT g.id) AS total_games,
-      AVG(gp.score) AS avg_score,
+      AVG(DISTINCT gp.score) AS avg_score,
       COUNT(a.id) AS total_answers,
       SUM(a.is_correct::int) AS correct,
       AVG(a.is_correct::int) AS accuracy
@@ -115,7 +115,7 @@ async function getTeacherStatsByDate(userId, date_from, date_to) {
     SELECT
       COUNT(DISTINCT g.id) AS total_games,
       COUNT(DISTINCT a.user_id) AS total_players,
-      AVG(gp.score) AS average_score,
+      AVG(DISTINCT gp.score) AS average_score,
       AVG(a.is_correct::int) AS overall_accuracy
     FROM games g
     JOIN answers a ON a.game_id = g.id
