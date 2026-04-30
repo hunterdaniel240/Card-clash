@@ -45,17 +45,18 @@ class GameManager {
     return game;
   }
 
-  static deleteGame(userId, join_code) {
+  static deleteGame(join_code) {
     const game = games.get(join_code);
 
-    if (game && game.hostId === userId) {
-      if (game.status !== "finished") {
-        // game ended before finishing, delete from DB
+    if (game) {
+      if (game.status != "lobby" && game.status != "finished") {
+        // game ended before finishing and was started, delete from DB
         const deletedGame = deleteGameController(game.gameId);
         console.log("deleted game from DB: " + deletedGame);
       }
 
       games.delete(join_code); // remove from memory
+      console.log("game deleted from memory");
     }
   }
 
@@ -104,7 +105,7 @@ class GameManager {
     if (!game) return null;
 
     if (game.hostId === userId) {
-      GameManager.deleteGame(userId, join_code);
+      GameManager.deleteGame(join_code);
     } else {
       const player = game.getPlayer(userId);
       if (!player) return null;
@@ -157,7 +158,7 @@ class GameManager {
 
     if (!dbGame) {
       console.log("Failed to add game to the DB.");
-      GameManager.deleteGame(socket.userId, join_code);
+      GameManager.deleteGame(join_code);
       return null;
     } else {
       console.log(game.gameId + " Added game to DB.");

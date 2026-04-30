@@ -171,7 +171,7 @@ export default function StatsPage() {
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`border-4 border-black px-6 py-3 text-lg font-black uppercase transition-all ${
+                  className={`border-4 border-black px-6 py-3 text-lg font-black uppercase cursor-pointer transition-all ${
                     timeframe === tf
                       ? "bg-purple-400 text-black"
                       : "bg-white text-black hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
@@ -313,7 +313,7 @@ export default function StatsPage() {
 
             <button
               onClick={() => router.push("/dashboard")}
-              className="w-full border-4 border-black bg-white p-4 text-lg font-black uppercase text-black transition-all hover:bg-black hover:text-white"
+              className="w-full border-4 border-black bg-white p-4 text-lg font-black uppercase text-black cursor-pointer transition-all hover:bg-black hover:text-white"
             >
               Back to Dashboard
             </button>

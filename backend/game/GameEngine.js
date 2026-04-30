@@ -30,9 +30,8 @@ async function runGameLoop(socketIo, game) {
     const questionStartTime = Date.now();
     await waitForAnswers(game, game.settings.timePerQuestion * 1000);
 
-    if (game.status !== "in_progress") {
-      break; // host dropped mid question, break to avoid grading and recording unanswered questions
-    }
+    if (game.status !== "in_progress") break; // host dropped mid question, break to avoid grading and recording unanswered questions
+    if (game.readyPlayers.size == 1) break; // only host is left in the game
 
     // determine which players answered correctly, apply points to the players
     game.gradeAnswers(questionStartTime);
@@ -50,9 +49,8 @@ async function runGameLoop(socketIo, game) {
     if (game.currentQuestionIndex == game.totalQuestions) break;
     await sleep(timeBetweenQuestions * 1000);
 
-    if (game.status !== "in_progress") {
-      break; // host dropped post question, avoid next round kicking off
-    }
+    if (game.status !== "in_progress") break; // host dropped mid question, break to avoid grading and recording unanswered questions
+    if (game.readyPlayers.size == 1) break; // only host is left in the game
   }
 
   if (game.status === "in_progress") {

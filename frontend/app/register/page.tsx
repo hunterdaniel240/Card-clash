@@ -163,7 +163,7 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full border-4 border-black bg-yellow-300 mt-4 py-5 text-2xl font-black uppercase text-black transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-3"
+              className="w-full border-4 border-black bg-yellow-300 mt-4 py-5 text-2xl font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-3"
             >
               Create Account <span className="text-3xl">→</span>
             </button>

@@ -121,7 +121,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full border-4 border-black bg-green-400 py-6 text-3xl font-black uppercase text-black transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-2"
+              className="w-full border-4 border-black bg-green-400 py-6 text-3xl font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none flex items-center justify-center gap-2"
             >
               ENTER <span className="text-4xl">→</span>
             </button>

@@ -324,13 +324,13 @@ export default function PostGamePage() {
 
           <button
             onClick={handleBackToLobby}
-            className="mt-8 border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            className="mt-8 border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
           >
             Back to Lobby
           </button>
           <button
             onClick={handleBackToDashboard}
-            className="mt-3 border-4 border-black bg-white p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            className="mt-3 border-4 border-black bg-white p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
           >
             Back to dashboard
           </button>
@@ -359,7 +359,7 @@ export default function PostGamePage() {
                 onClick={() => {
                   setStudentWaiting(false);
                 }}
-                className="mt-8 border-4 border-black bg-white p-4 text-lg font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                className="mt-8 border-4 border-black bg-white p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
               >
                 Cancel
               </button>
