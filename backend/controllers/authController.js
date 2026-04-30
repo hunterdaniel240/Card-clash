@@ -4,6 +4,7 @@ require("dotenv").config();
 
 async function loginController(req, res) {
   try {
+    console.log("received login request");
     const { email, password } = req.body;
 
     const user = await loginUser({ email, password });
