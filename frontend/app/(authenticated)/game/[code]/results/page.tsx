@@ -174,18 +174,21 @@ export default function PostGamePage() {
   ) : (
     <>
       <style>{`
-        @keyframes bg-pulse {
-          0%, 49% { background-color: #fdba74; }
-          50%, 100% { background-color: #c084fc; }
-        }
-        @keyframes drift {
-          from { background-position: 0 0; }
-          to { background-position: 400px 400px; }
-        }
-        .animate-bg-flip { animation: bg-pulse 6s infinite; }
-        .animate-drift { animation: drift 40s linear infinite; }
-      `}</style>
-      <div className="relative min-h-screen p-4 overflow-y-auto animate-bg-flip">
+      @keyframes bg-pulse {
+        0%, 49% { background-color: #fdba74; }
+        50%, 100% { background-color: #c084fc; }
+      }
+      @keyframes drift {
+        from { background-position: 0 0; }
+        to { background-position: 400px 400px; }
+      }
+      .animate-bg-flip { animation: bg-pulse 6s infinite; }
+      .animate-drift { animation: drift 40s linear infinite; }
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    `}</style>
+
+      <div className="relative min-h-screen p-8 animate-bg-flip overflow-hidden">
         <div
           className="absolute inset-[-100%] z-0 rotate-[-10deg] pointer-events-none animate-drift"
           style={{
@@ -193,174 +196,174 @@ export default function PostGamePage() {
             backgroundSize: "400px 400px",
           }}
         />
-        <div className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 pb-8 lg:grid-cols-2">
-          <h1 className="text-5xl font-black uppercase lg:col-span-2 text-center">
-  Game Over
-</h1>
 
-          {/* Final Scores */}
-          <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-            <div className="border-b-[6px] border-black bg-cyan-400 p-6 text-center">
-              <h2 className="text-3xl font-black uppercase italic">
-                Final Scores
-              </h2>
-            </div>
+        <div className="relative z-10 mx-auto w-full max-w-6xl pb-8">
+          {/* Title */}
+          <h1 className="text-5xl font-black uppercase text-center mb-8">
+            Game Over
+          </h1>
 
-            <div className="h-[300px] overflow-y-auto p-6 space-y-3">
-              {loading ? (
-                <div className="text-center font-black text-xl">
-                  Loading scores...
-                </div>
-              ) : stickyWinners?.length > 0 ? (
-                stickyWinners.map((player, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between border-4 border-black p-3 font-black text-lg"
-                  >
-                    <span>{player.name}</span>
-                    <span>{player.score ?? 0}</span>
+          {/* Cards grid */}
+          <div className="grid grid-cols-2 gap-6 ">
+            {/* Final Scores */}
+            <div
+              className={`flex flex-col border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]
+    ${user.role === "student" ? "lg:col-span-2" : ""}`}
+            >
+              <div className="border-b-[6px] border-black bg-cyan-400 p-6 text-center shrink-0">
+                <h2 className="text-3xl font-black uppercase italic">
+                  Final Scores
+                </h2>
+              </div>
+              <div className="overflow-y-auto p-6 space-y-3 max-h-75">
+                {loading ? (
+                  <div className="text-center font-black text-xl">
+                    Loading scores...
                   </div>
-                ))
-              ) : (
-                <div className="text-center font-black text-xl">
-                  No scores available
-                </div>
-              )}
+                ) : stickyWinners?.length > 0 ? (
+                  stickyWinners.map((player, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between border-4 border-black p-3 font-black text-lg"
+                    >
+                      <span>{player.name}</span>
+                      <span>{player.score ?? 0}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center font-black text-xl">
+                    No scores available
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Question Summary - Teacher Only */}
+            {user.role === "teacher" && questionsSummary.length > 0 && (
+              <div className="flex flex-col border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] col-span-1">
+                <div className="border-b-[6px] border-black bg-yellow-300 p-6 text-center shrink-0">
+                  <h2 className="text-3xl font-black uppercase italic">
+                    Question Summary
+                  </h2>
+                </div>
+                <div className=" overflow-y-auto p-6 space-y-4 max-h-75">
+                  {questionsSummary.map((q, i) => (
+                    <div key={i} className="border-4 border-black p-4">
+                      <h3 className="font-black text-xl mb-2">
+                        Q{i + 1}: {q.question_text}
+                      </h3>
+                      <ul className="list-disc pl-6">
+                        {q.players.map((p, idx) => (
+                          <li
+                            key={idx}
+                            className={`font-black ${p.correct ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {p.name} {p.correct ? "(Correct)" : "(Incorrect)"}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Teacher AI Summary */}
+            {user.role === "teacher" && (
+              <div className="flex flex-col col-span-2 border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+                <div className="border-b-[6px] border-black bg-purple-400 p-6 text-center shrink-0">
+                  <h2 className="text-3xl font-black uppercase italic">
+                    Teacher AI Summary
+                  </h2>
+                </div>
+                <div className="overflow-y-auto p-6 max-h-100">
+                  {loading ? (
+                    <div className="text-center font-black text-lg">
+                      Generating AI summary...
+                    </div>
+                  ) : error ? (
+                    <div className="text-center font-black text-lg text-red-600">
+                      {error}
+                    </div>
+                  ) : teacherAISummary ? (
+                    <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                      {teacherAISummary}
+                    </p>
+                  ) : (
+                    <div className="text-center font-black text-lg">
+                      No summary available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Student AI Feedback */}
+            {user.role === "student" && (
+              <div className="flex flex-col border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] lg:col-span-2">
+                <div className="border-b-[6px] border-black bg-green-400 p-6 text-center shrink-0">
+                  <h2 className="text-3xl font-black uppercase italic">
+                    Student AI Feedback
+                  </h2>
+                </div>
+                <div className="overflow-y-auto p-6 max-h-[400px]">
+                  {loading ? (
+                    <div className="text-center font-black text-lg">
+                      Generating personalized feedback...
+                    </div>
+                  ) : error ? (
+                    <div className="text-center font-black text-lg text-red-600">
+                      {error}
+                    </div>
+                  ) : studentAISummary ? (
+                    <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                      {studentAISummary}
+                    </p>
+                  ) : (
+                    <div className="text-center font-black text-lg">
+                      No feedback available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Teacher AI Summary */}
-          {user.role === "teacher" && (
-            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-              <div className="border-b-[6px] border-black bg-purple-400 p-6 text-center">
-                <h2 className="text-3xl font-black uppercase italic">
-                  Teacher AI Summary
-                </h2>
-              </div>
-
-              <div className="h-[300px] overflow-y-auto p-6 text-black">
-                {loading ? (
-                  <div className="text-center font-black text-lg">
-                    Generating AI summary...
-                  </div>
-                ) : error ? (
-                  <div className="text-center font-black text-lg text-red-600">
-                    {error}
-                  </div>
-                ) : teacherAISummary ? (
-                  <p className="text-lg leading-relaxed whitespace-pre-wrap">
-                    {teacherAISummary}
-                  </p>
-                ) : (
-                  <div className="text-center font-black text-lg">
-                    No summary available
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Question Summary (Teacher Only) */}
-          {user.role === "teacher" && questionsSummary.length > 0 && (
-            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
-              <div className="border-b-[6px] border-black bg-yellow-300 p-6 text-center">
-                <h2 className="text-3xl font-black uppercase italic">
-                  Question Breakdown
-                </h2>
-              </div>
-
-              <div className="h-[300px] overflow-y-auto p-6 space-y-4 text-black">
-                {questionsSummary.map((q, i) => (
-                  <div key={i} className="border-4 border-black p-4">
-                    <h3 className="font-black text-xl mb-2">
-                      Q{i + 1}: {q.question_text}
-                    </h3>
-                    <ul className="list-disc pl-6">
-                      {q.players.map((p, idx) => (
-                        <li
-                          key={idx}
-                          className={`font-black ${
-                            p.correct ? "text-green-600" : "text-red-600"
-                          }`}
-                        >
-                          {p.name} {p.correct ? "(Correct)" : "(Incorrect)"}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Student AI Summary */}
-          {user.role === "student" && (
-            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] lg:col-span-2">
-              <div className="border-b-[6px] border-black bg-green-400 p-6 text-center">
-                <h2 className="text-3xl font-black uppercase italic">
-                  Student AI Feedback
-                </h2>
-              </div>
-
-              <div className="h-[300px] overflow-y-auto p-6 text-black">
-                {loading ? (
-                  <div className="text-center font-black text-lg">
-                    Generating personalized feedback...
-                  </div>
-                ) : error ? (
-                  <div className="text-center font-black text-lg text-red-600">
-                    {error}
-                  </div>
-                ) : studentAISummary ? (
-                  <p className="text-lg leading-relaxed whitespace-pre-wrap">
-                    {studentAISummary}
-                  </p>
-                ) : (
-                  <div className="text-center font-black text-lg">
-                    No feedback available
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={handleBackToLobby}
-            className="mt-8 border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
-          >
-            Back to Lobby
-          </button>
-          <button
-            onClick={handleBackToDashboard}
-            className="mt-3 border-4 border-black bg-white p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
-          >
-            Back to dashboard
-          </button>
+          {/* Buttons — outside grid, always at the bottom */}
+          <div className="flex gap-4 mt-8">
+            <button
+              onClick={handleBackToLobby}
+              className="flex-1 border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            >
+              Back to Lobby
+            </button>
+            <button
+              onClick={handleBackToDashboard}
+              className="flex-1 border-4 border-black bg-white p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            >
+              Back to Dashboard
+            </button>
+          </div>
         </div>
 
-        {/* This modal appears if back to lobby was pressed, but host hasn't reset the game yet */}
+        {/* Waiting on Host Modal */}
         {waitingOnHost && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="bg-white border-6 border-black p-8 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
+            <div className="bg-white border-[6px] border-black p-8 text-center shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
               <h2 className="text-2xl font-black uppercase mb-4">
                 Waiting on Host
               </h2>
-
               <p className="font-black text-lg">
                 The host has not reset the game yet.
               </p>
-
               <p className="mt-2 text-sm">
                 Retrying connection every few seconds...
               </p>
-
               <div className="mt-4 animate-pulse font-black">
                 Please wait...
               </div>
               <button
-                onClick={() => {
-                  setStudentWaiting(false);
-                }}
+                onClick={() => setStudentWaiting(false)}
                 className="mt-8 border-4 border-black bg-white p-4 text-lg font-black uppercase cursor-pointer hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
               >
                 Cancel
