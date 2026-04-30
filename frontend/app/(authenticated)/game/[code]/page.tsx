@@ -200,7 +200,7 @@ export default function ActiveGamePage() {
                           key={opt.id}
                           disabled={answered}
                           onClick={() => submitAnswer(opt.id)}
-                          className={`border-4 border-black p-6 text-lg font-black uppercase transition-all
+                          className={`border-4 border-black p-6 text-lg font-black uppercase cursor-pointer transition-all
                           hover:-translate-x-1 hover:-translate-y-1
                           hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]
                           active:translate-x-0 active:translate-y-0 active:shadow-none

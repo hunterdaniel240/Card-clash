@@ -40,7 +40,7 @@ function LeaveGameOn(socket) {
     if (game) {
       LobbyUpdateEmit(join_code, game);
     } else {
-      LobbyClosedEmit(join_code);
+      LobbyClosedEmit(join_code, "Host left");
     }
   });
 }
@@ -66,8 +66,6 @@ function KickPlayerOn(socket) {
 
     if (updatedGame) {
       LobbyUpdateEmit(join_code, updatedGame);
-    } else {
-      LobbyClosedEmit(join_code);
     }
   });
 }
@@ -103,9 +101,7 @@ function UserDisconnectingOn(socket) {
           if (gone) {
             GameManager.leaveGame(tempUserId, room);
 
-            getSocketIo()
-              .to(room)
-              .emit("game-terminated", { reason: "Host has disconnected" });
+            LobbyClosedEmit(room, "Host has disconnected");
           } else {
             game.status = "in_progress";
 
@@ -115,6 +111,13 @@ function UserDisconnectingOn(socket) {
       } else {
         GameManager.leaveGame(socket.userId, room);
         const updatedGame = GameManager.getGame(room);
+        if (updatedGame.readyPlayers.size == 1) {
+          game.status = "players-disconnected";
+
+          console.log("all players left");
+          LobbyClosedEmit(room, "All players left");
+          GameManager.deleteGame(room);
+        }
         if (updatedGame) {
           LobbyUpdateEmit(room, updatedGame);
         }

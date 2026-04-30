@@ -15,10 +15,12 @@ export default function GameListener({ children }) {
   const [terminatedMessage, setTerminatedMessage] = useState(null);
 
   useEffect(() => {
-    if (user.role === "teacher") return;
-
     const onGameTerminated = ({ reason }) => {
-      setTerminatedMessage(reason || "The game has been terminated.");
+      if (reason === "Host left" && user.role !== "teacher") {
+        setTerminatedMessage(reason || "The game has been terminated.");
+      } else if (reason !== "Host left") {
+        setTerminatedMessage(reason || "The game has been terminated.");
+      }
       resetContext(null);
 
       router.push("/dashboard");
@@ -79,7 +81,7 @@ export default function GameListener({ children }) {
             <p className="font-black text-lg">{kickedMessage}</p>
             <button
               onClick={handleKickedDismiss}
-              className="mt-6 border-4 border-black bg-lime-400 px-6 py-3 font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+              className="mt-6 border-4 border-black bg-lime-400 px-6 py-3 font-black uppercase cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
             >
               Dismiss
             </button>
@@ -94,7 +96,7 @@ export default function GameListener({ children }) {
             <p className="font-black text-lg">{terminatedMessage}</p>
             <button
               onClick={handleTerminatedDismiss}
-              className="mt-6 border-4 border-black bg-lime-400 px-6 py-3 font-black uppercase hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+              className="mt-6 border-4 border-black bg-lime-400 px-6 py-3 font-black uppercase cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
             >
               Dismiss
             </button>

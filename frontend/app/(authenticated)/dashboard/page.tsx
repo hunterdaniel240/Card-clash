@@ -221,7 +221,7 @@ export default function DashboardPage() {
                 <button
                   key={index}
                   onClick={item.onClickFunction}
-                  className={`w-full border-4 border-black ${item.color} p-6 text-2xl font-black uppercase text-black text-left flex justify-between items-center transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none group`}
+                  className={`w-full border-4 border-black ${item.color} p-6 text-2xl font-black uppercase text-black text-left flex justify-between items-center cursor-pointer transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none group`}
                 >
                   {item.label}
                   <span className="text-3xl transition-transform group-hover:rotate-12">
@@ -263,14 +263,14 @@ export default function DashboardPage() {
                 <div className="border-t-[6px] border-black p-4 bg-white flex gap-3">
                   <button
                     onClick={handleJoinLobby}
-                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   >
                     Join
                   </button>
 
                   <button
                     onClick={() => setShowJoinGameModal(false)}
-                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   >
                     Cancel
                   </button>
@@ -378,14 +378,14 @@ export default function DashboardPage() {
                 <div className="border-t-[6px] border-black p-4 bg-white flex gap-3">
                   <button
                     onClick={handleConfirmGameSettings}
-                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   >
                     Create Game
                   </button>
 
                   <button
                     onClick={() => setShowGameSettingsModal(false)}
-                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   >
                     Cancel
                   </button>

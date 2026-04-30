@@ -163,7 +163,7 @@ export default function QuestionsPage() {
             <div className="flex justify-between items-center">
               <button
                 onClick={() => setShowModal(true)}
-                className="border-4 border-black bg-yellow-300 px-6 py-3 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                className="border-4 border-black bg-yellow-300 px-6 py-3 text-lg font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
               >
                 Add Question
               </button>
@@ -209,7 +209,7 @@ export default function QuestionsPage() {
 
                       <button
                         onClick={() => handleDelete(q.id)}
-                        className="border-2 border-black px-3 py-1 font-bold bg-red-400 text-black"
+                        className="border-2 border-black px-3 py-1 font-bold bg-red-400 text-black cursor-pointer"
                       >
                         Delete
                       </button>
@@ -224,7 +224,7 @@ export default function QuestionsPage() {
                 onClick={() => {
                   router.push("/dashboard");
                 }}
-                className="w-full border-4 border-black bg-white p-4 text-lg font-black uppercase text-black transition-all hover:bg-black hover:text-white"
+                className="w-full border-4 border-black bg-white p-4 text-lg font-black uppercase text-black cursor-pointer transition-all hover:bg-black hover:text-white"
               >
                 Back to menu
               </button>

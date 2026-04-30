@@ -21,6 +21,7 @@ export default function LobbyPage() {
   const [questions, setQuestions] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [showError, setShowError] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const {
     setgameId,
@@ -176,9 +177,26 @@ export default function LobbyPage() {
               <h1 className="text-5xl font-black uppercase italic text-black tracking-tighter">
                 Game Lobby
               </h1>
-              <h2 className="text-2xl font-black uppercase italic text-black ">
-                Join Code: {join_code}
-              </h2>
+              <div className="flex justify-center items-center gap-3 mt-2">
+                <h2 className="text-2xl font-black uppercase italic text-black">
+                  Join Code:
+                </h2>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(join_code);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className={`flex items-center gap-2 px-4 py-2 border-4 border-black font-black text-2xl uppercase italic tracking-widest cursor-pointer transition-all 
+        ${
+          copied
+            ? "bg-green-400 translate-x-0 translate-y-0 shadow-none"
+            : "bg-purple-100 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+        }`}
+                >
+                  {copied ? "✓ Copied!" : join_code}
+                </button>
+              </div>
             </div>
 
             <div className="p-8 space-y-8">
@@ -207,7 +225,7 @@ export default function LobbyPage() {
                       </div>
                       {user?.role === "teacher" && (
                         <button
-                          className="border-4 border-black p-2 text-sm font-black uppercase text-red-600 transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                          className="border-4 border-black p-2 text-sm font-black uppercase text-red-600 cursor-pointer "
                           onClick={() => {
                             socket.emit("kick-player", {
                               join_code,
@@ -227,7 +245,7 @@ export default function LobbyPage() {
                 {user?.role === "teacher" && (
                   <>
                     <button
-                      className="border-4 border-black bg-lime-400 p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                      className="border-4 border-black bg-green-400 p-4 text-lg font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                       onClick={handleStartGame}
                     >
                       Start Game
@@ -243,7 +261,7 @@ export default function LobbyPage() {
                   </>
                 )}
                 <button
-                  className="border-4 border-black  p-4 text-lg font-black uppercase text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  className="border-4 border-black bg-rose-400 p-4 text-lg font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
                   onClick={() => {
                     resetContext();
                     socket.emit("leave-game", { join_code });

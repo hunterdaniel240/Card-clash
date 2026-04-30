@@ -34,7 +34,7 @@ export default function ErrorAlert({
           </h3>
           <button
             onClick={onClose}
-            className="text-2xl font-black text-black hover:text-red-700 transition-colors"
+            className="text-2xl font-black text-black cursor-pointer hover:text-red-700 transition-colors"
           >
             ×
           </button>
@@ -51,7 +51,7 @@ export default function ErrorAlert({
         <div className="border-t-[6px] border-black bg-white p-3 flex justify-end">
           <button
             onClick={onClose}
-            className="border-4 border-black bg-lime-400 px-4 py-2 font-black uppercase text-sm text-black transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+            className="border-4 border-black bg-lime-400 px-4 py-2 font-black uppercase text-sm text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
           >
             Dismiss
           </button>
