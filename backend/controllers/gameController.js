@@ -1,41 +1,130 @@
-const Game = require("../models/Game"); 
+const Game = require("../models/Game");
+const gameService = require("../services/gameService");
 
 // Create a new game
-async function createGameController(req, res) {
+async function createGameController(data) {
   try {
-    const game = await Game.createGame(req.body);
-    res.status(201).json(game);
+    // Inserts into game table
+    const game = await Game.createGame(data);
+
+    // formats as below
+    // ($1, $2, $3), ...
+    const placeholder = data.selected_questions
+      .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`)
+      .join(", ");
+
+    const values = data.selected_questions.flatMap((question, i) => [
+      data.gameId,
+      question.id,
+      i,
+    ]);
+
+    // Inserts into game_questions table
+    const questions_result = await Game.addQuestionsDB(placeholder, values);
+    console.log(
+      "Questions Added to DB for " +
+        game.join_code +
+        ": " +
+        questions_result.rowCount +
+        " added",
+    );
+
+    return game;
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to create game" });
+    return null;
   }
 }
 
-// Get game by ID
-async function getGameByIdController(req, res) {
+async function deleteGameController(gameId) {
   try {
-    const game = await Game.getGameById(req.params.id);
-    if (!game) return res.status(404).json({ message: "Game not found" });
-    res.json(game);
+    const deleted = await Game.deleteGame(gameId);
+    if (!deleted) {
+      return null;
+    }
+
+    return deleted;
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to fetch game" });
+    return null;
   }
 }
 
-// Get all games
-async function getAllGamesController(req, res) {
+async function endGameController(data) {
   try {
-    const games = await Game.getAllGames();
-    res.json(games);
+    const result = await Game.endGameDB(
+      data.gameId,
+      data.status,
+      data.ended_at,
+    );
+    console.log("end game DB update result: " + result.rowCount);
+    if (!result) {
+      return null;
+    }
+
+    return result;
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to fetch games" });
+    return null;
+  }
+}
+
+async function updateGameStatusController(gameId, status) {
+  try {
+    const result = await Game.updateStatus(gameId, status);
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+async function getTeacherStatsByDateController(req, res) {
+  const { userId } = req.params;
+  const { date_from, date_to } = req.query;
+
+  try {
+    const data = await gameService.getTeacherStatsByDate(
+      userId,
+      date_from,
+      date_to,
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+}
+
+async function getStudentStatsByDateController(req, res) {
+  const { userId } = req.params;
+  const { date_from, date_to } = req.query;
+
+  try {
+    const data = await gameService.getStudentStatsByDate(
+      userId,
+      date_from,
+      date_to,
+    );
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch stats" });
   }
 }
 
 module.exports = {
   createGameController,
-  getGameByIdController,
-  getAllGamesController
+  deleteGameController,
+  updateGameStatusController,
+  endGameController,
+  getStudentStatsByDateController,
+  getTeacherStatsByDateController,
+  getStudentStatsByDateController,
 };

@@ -19,8 +19,9 @@ Card Clash is a multiplayer classroom quiz platform inspired by Kahoot. Teachers
 1. Open two terminal windows
 2. In one terminal, cd /frontend
 3. In the second terminal, cd /backend
-4. In both terminals, npm run dev
-5. enter "http://localhost:3000/" in your browser
+4. In both terminals, npm i
+5. In both terminals, npm run dev
+6. enter "http://localhost:3000/" in your browser
 
 ---
 
@@ -67,10 +68,6 @@ Card Clash is a multiplayer classroom quiz platform inspired by Kahoot. Teachers
 
 - OpenAI
 
-## Testing Framework
-
-- Jest
-
 ---
 
 # Roles & Permissions
@@ -88,10 +85,11 @@ Card Clash is a multiplayer classroom quiz platform inspired by Kahoot. Teachers
 - Join game sessions
 - Submit answers
 - View leaderboard
+- View dashboard statistics
 
 ---
 
-# Database Model (Rough Draft)
+# Database Model
 
 ## Users
 
@@ -106,7 +104,7 @@ Card Clash is a multiplayer classroom quiz platform inspired by Kahoot. Teachers
 
 - id (PK)
 - host_id (FK → Users)
-- join_code (unique)
+- join_code
 - status (lobby | in_progress | finished)
 - created_at
 - ended_at
@@ -152,13 +150,13 @@ Status definitions:
 - user_id (FK)
 - selected_option
 - is_correct
-- response_time_ms
 - answered_at
 
 ## AI_Summaries
 
 - id (PK)
 - game_id (FK)
+- user_id (FK)
 - summary_text
 - generated_at
 
@@ -185,29 +183,29 @@ Register form fields:
 
 /dashboard
 
-/profile
-
 ## Teacher Only
-
-/create-game
-Note: This route is now implemented as a button
 
 /lobby/[sessionid] (host view)
 
 /game/[sessionid] (host view)
 
+/game/[sessionId]/results
+
 /questions
 
 /questions/create
 
-## Student Only
+/stats
 
-/join-game
-Note: This route is now implemented as a button
+## Student Only
 
 /lobby/[sessionid] (player view)
 
 /game/[sessionid] (player view)
+
+/game/[sessionId]/results
+
+/stats
 
 ---
 
@@ -219,19 +217,29 @@ POST /api/auth/register
 
 POST /api/auth/login
 
+POST /api/auth/logout
+
+POST /api/auth/me (Cookie use)
+
 ## Questions
+
+GET /api/questions/[teacherId]
 
 POST /api/questions
 
-GET /api/questions
+DELETE /api/questions/[questionId]
 
 ## Games
 
-POST /api/games/create
+GET /api/games/stats/teacher/[teacherId]
 
-POST /api/games/join
+GET /api/games/stats/student/[studentId]
 
-GET /api/games/:id/stats
+## AI Summary
+
+GET /api/aiSummaries/teacher
+
+GET /api/aiSummaries/student
 
 ---
 
@@ -253,6 +261,8 @@ A student can:
 - Join game via code
 - Submit answers
 - See live leaderboard
+- View dashboard stats
+- Generate AI summary
 
 ---
 
@@ -261,10 +271,6 @@ A student can:
 ## Testing Strategy Overview
 
 Testing includes:
-
-Backend unit and integration tests using Jest
-
-Frontend component tests using Jest
 
 Manual end-to-end demo testing before submission
 
@@ -275,8 +281,6 @@ Testing focus areas:
 - Score logic
 - Stats calculation
 - Core UI rendering
-
-Full E2E coverage is not targeted. Testing focuses on protecting core features.
 
 ---
 
@@ -299,14 +303,15 @@ Full E2E coverage is not targeted. Testing focuses on protecting core features.
 ## Game Creation
 
 - Creating game returns join code
-- Join game adds player to database
+- Join game adds player to game
 - Joining invalid code fails
+- Students cannot join a full game or a game in progress
 
-## Score Logic (Unit Tests)
+## Score Logic
 
 - Correct answer increases score
 - Incorrect answer does not increase score
-- Score calculation function works independently
+- Scoring is multiplied depending on response time
 
 ## Stats Endpoint
 
@@ -330,14 +335,13 @@ Full E2E coverage is not targeted. Testing focuses on protecting core features.
 
 ## Game UI
 
-- QuestionCard renders question text
-- AnswerOptions renders 4 options
-- Leaderboard renders player list
+- Question card renders question text
+- Answer options renders 4 options
+- Leaderboard renders player list with score
 
 ## Dashboard
 
 - Chart component renders
-- AI summary section renders text
 
 ---
 
@@ -489,3 +493,5 @@ Potential improvements beyond MVP:
 # Project Goal
 
 The goal of Card Clash is to create an engaging, real-time learning environment that helps teachers quickly identify student knowledge gaps while keeping students actively engaged through competitive gameplay and immediate feedback.
+
+### Card Clash | Version 1.0.0 2026

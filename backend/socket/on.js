@@ -1,19 +1,14 @@
+const { runGameLoop } = require("../game/GameEngine");
 const { GameManager } = require("../game/gameManager");
-const { getSocketIo } = require;
+const { LobbyUpdateEmit, LobbyClosedEmit } = require("../socket/emit");
+const { getSocketIo } = require("./index");
 
 function CreateGameOn(socket) {
-  socket.on("create-game", ({ name, settings, questionIds }, callback) => {
-    let game = GameManager.createGame(socket, name, settings, questionIds);
+  socket.on("create-game", ({ name, role, settings }, callback) => {
+    let game = GameManager.createGame(socket, name, role, settings);
 
-    const gameDTO = game.toDTO();
-    callback(gameDTO);
-  });
-}
-
-function JoinGameOn(socket) {
-  socket.on("join-game", ({ name, join_code }, callback) => {
-    let game = GameManager.joinGame(socket, join_code, name);
     if (game) {
+      socket.join(game.join_code);
       const gameDTO = game.toDTO();
       callback(gameDTO);
     } else {
@@ -22,13 +17,174 @@ function JoinGameOn(socket) {
   });
 }
 
+function JoinGameOn(socket) {
+  socket.on("join-game", ({ name, role, join_code }, callback) => {
+    let { game, message } = GameManager.joinGame(socket, join_code, name, role);
+
+    if (game) {
+      socket.join(join_code);
+
+      LobbyUpdateEmit(join_code, game);
+      callback({ success: true, game: game.toDTO() });
+    } else {
+      callback({ success: false, message: message });
+    }
+  });
+}
+
+function LeaveGameOn(socket) {
+  socket.on("leave-game", ({ join_code }) => {
+    GameManager.leaveGame(socket.userId, join_code);
+
+    const game = GameManager.getGame(join_code);
+    if (game) {
+      LobbyUpdateEmit(join_code, game);
+    } else {
+      LobbyClosedEmit(join_code, "Host left");
+    }
+  });
+}
+
+function KickPlayerOn(socket) {
+  socket.on("kick-player", ({ join_code, target_id }) => {
+    const game = GameManager.getGame(join_code);
+    if (!game) return;
+
+    if (game.hostId !== socket.userId) return;
+
+    const targetSocket = [...socket.server.sockets.sockets.values()].find(
+      (s) => s.userId === target_id,
+    );
+
+    if (targetSocket) {
+      targetSocket.emit("kicked");
+    }
+
+    GameManager.leaveGame(target_id, join_code);
+
+    const updatedGame = GameManager.getGame(join_code);
+
+    if (updatedGame) {
+      LobbyUpdateEmit(join_code, updatedGame);
+    }
+  });
+}
+
+function UpdateGameSettingsOn(socket) {
+  socket.on("update-game-settings", ({ join_code, settings }, callback) => {
+    let game = GameManager.updateGameSettings(join_code, settings);
+
+    if (!game || game.hostId !== socket.userId) return null;
+
+    LobbyUpdateEmit(join_code, game);
+    callback(game.toDTO());
+  });
+}
+
 // host refreshing deletes the lobby
 function UserDisconnectingOn(socket) {
   socket.on("disconnecting", () => {
     socket.rooms.forEach((room) => {
-      GameManager.leaveGame(socket, room);
-      console.log("user disconnected from game");
+      const game = GameManager.getGame(room);
+      if (!game) return;
+
+      // This function gives host a few seconds to reconnect or if the user is a student then disconnect them
+      if (game.hostId === socket.userId) {
+        const tempUserId = socket.userId;
+        if (game.status === "in_progress") {
+          game.status = "host_disconnected"; // temp status
+        }
+        getSocketIo().to(room).emit("host-disconnected");
+
+        setTimeout(() => {
+          const gone = !getSocketIo().sockets.sockets.get(socket.userId);
+          if (gone) {
+            GameManager.leaveGame(tempUserId, room);
+
+            LobbyClosedEmit(room, "Host has disconnected");
+          } else {
+            game.status = "in_progress";
+
+            getSocketIo().to(room).emit("host-reconnected");
+          }
+        }, 10000);
+      } else {
+        GameManager.leaveGame(socket.userId, room);
+        const updatedGame = GameManager.getGame(room);
+        if (updatedGame.readyPlayers.size == 1) {
+          game.status = "players-disconnected";
+
+          console.log("all players left");
+          LobbyClosedEmit(room, "All players left");
+          GameManager.deleteGame(room);
+        }
+        if (updatedGame) {
+          LobbyUpdateEmit(room, updatedGame);
+        }
+      }
     });
   });
 }
-module.exports = { CreateGameOn, JoinGameOn, UserDisconnectingOn };
+
+function StartGameOn(socket) {
+  socket.on("start-game", async ({ join_code, questions }) => {
+    const game = await GameManager.startGame(join_code, questions);
+
+    if (!game || game.hostId !== socket.userId) return null;
+    getSocketIo().to(join_code).emit("game-started", {
+      join_code,
+      totalQuestions: game.totalQuestions,
+    });
+  });
+}
+
+function ResetGameOn(socket) {
+  socket.on("reset-game", ({ join_code }) => {
+    const newGame = GameManager.resetGame(join_code);
+
+    if (!newGame || newGame.hostId !== socket.userId) return null;
+
+    // notify ALL clients in lobby
+    getSocketIo().to(join_code).emit("game-reset", {
+      game: newGame.toDTO(),
+    });
+  });
+}
+
+function GameReadyOn(socket) {
+  socket.on("game-page-ready", ({ join_code }) => {
+    const game = GameManager.getGame(join_code);
+    if (!game) return null;
+
+    game.readyPlayers.add(socket.userId);
+
+    // loopStarted is REQUIRED. React 18 dev mode mounts components twice which will trigger a race condition to occur in the loop
+    if (!game.loopStarted && game.readyPlayers.size === game.players.size) {
+      game.loopStarted = true;
+      runGameLoop(getSocketIo(), game);
+    }
+  });
+}
+
+function SubmitAnswerOn(socket) {
+  socket.on("submit-answer", ({ join_code, answer }) => {
+    const game = GameManager.submitAnswer(socket.userId, join_code, answer);
+
+    if (!game) return null;
+
+    getSocketIo().to(join_code).emit("player-answered", game.playersAnswered);
+  });
+}
+
+module.exports = {
+  CreateGameOn,
+  JoinGameOn,
+  LeaveGameOn,
+  KickPlayerOn,
+  UserDisconnectingOn,
+  UpdateGameSettingsOn,
+  StartGameOn,
+  SubmitAnswerOn,
+  GameReadyOn,
+  ResetGameOn,
+};

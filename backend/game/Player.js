@@ -1,16 +1,20 @@
 class Player {
-  constructor(id, name) {
-    this.id = id;
+  constructor(socketId, userId, name, role) {
+    this.socketId = socketId;
+    this.userId = userId;
     this.name = name;
-    this.isReady = false;
     this.score = 0;
+    this.role = role;
+
+    this.answer = null;
+    this.answeredAt = null;
   }
 
   toDTO() {
     return {
-      id: this.id,
+      socketId: this.socketId,
+      userId: this.userId,
       name: this.name,
-      isReady: this.isReady,
       score: this.score,
     };
   }

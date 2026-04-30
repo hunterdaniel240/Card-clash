@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { loginUser, registerUser } = require("../services/authService");
-require("dotenv").config({ path: [".env.local"] });
+require("dotenv").config();
 
 async function loginController(req, res) {
   try {

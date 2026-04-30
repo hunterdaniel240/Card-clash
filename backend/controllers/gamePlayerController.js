@@ -1,53 +1,58 @@
 const GamePlayer = require("../models/GamePlayer");
 
 // Add a player to a game
-async function addPlayerController(req, res) {
+async function addPlayersController(data) {
   try {
-    const player = await GamePlayer.addPlayer(req.body);
-    res.status(201).json(player);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to add player" });
-  }
-}
+    // formats as below
+    // ($1, $2), ...
+    const placeholder = [...data.players.values()]
+      .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
+      .join(", ");
 
-// Remove a player from a game
-async function removePlayerController(req, res) {
-  try {
-    const removed = await GamePlayer.removePlayer(req.params.id);
-    if (!removed) return res.status(404).json({ message: "Player not found" });
-    res.json({ message: "Player removed", player: removed });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to remove player" });
-  }
-}
+    const values = [...data.players.values()].flatMap((player) => [
+      data.gameId,
+      player.userId,
+    ]);
 
-// Get all players in a game
-async function getPlayersByGameController(req, res) {
-  try {
-    const players = await GamePlayer.getPlayersByGame(req.params.gameId);
-    res.json(players);
+    const gamePlayer_result = await GamePlayer.addPlayers(placeholder, values);
+    console.log(
+      "Game Players Added to DB for " +
+        data.join_code +
+        ": " +
+        gamePlayer_result.rowCount +
+        " added",
+    );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to fetch players" });
+    return null;
   }
 }
 
 // Update player score
-async function updatePlayerScoreController(req, res) {
+async function updatePlayerScoreController(data) {
   try {
-    const updated = await GamePlayer.updateScore(req.params.id, req.body.score);
-    res.json(updated);
+    const userIds = data.scores.map((player) => player.userId);
+    const scores = data.scores.map((player) => player.score);
+
+    const updated_result = await GamePlayer.updateScore(
+      data.gameId,
+      userIds,
+      scores,
+    );
+
+    console.log(
+      "Game scores updated to DB for " +
+        data.join_code +
+        ": " +
+        updated_result.rowCount +
+        " added",
+    );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Failed to update score" });
   }
 }
 
 module.exports = {
-  addPlayerController,
-  removePlayerController,
-  getPlayersByGameController,
-  updatePlayerScoreController
+  addPlayersController,
+  updatePlayerScoreController,
 };

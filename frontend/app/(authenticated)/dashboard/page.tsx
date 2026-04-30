@@ -6,10 +6,17 @@ import { useAuth } from "@/context/AuthContext";
 import { useGame } from "@/context/GameContext";
 import { useRouter } from "next/navigation";
 
+import ErrorAlert from "@/components/ErrorAlert";
+
 export default function DashboardPage() {
   const { user, logout, setLoading } = useAuth();
   const [showJoinGameModal, setShowJoinGameModal] = useState(false);
+  const [showGameSettingsModal, setShowGameSettingsModal] = useState(false);
+
   const [code, setCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showError, setShowError] = useState(false);
+
   const router = useRouter();
   const {
     setgameId,
@@ -23,6 +30,14 @@ export default function DashboardPage() {
     setWinners,
   } = useGame();
 
+  // GAME SETTINGS STATE
+  const [gameSettings, setGameSettings] = useState({
+    timePerQuestion: 20,
+    shuffleQuestions: true,
+    showAnswer: false,
+    maxPlayers: 30,
+  });
+
   // this creates a random pattern of randomly tilted puncuation marks, !, ? and checkmark
   const punctuationPattern = {
     backgroundImage: `url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cg font-family='Arial Black, sans-serif' font-weight='900' font-size='150' fill='black' fill-opacity='0.12'%3E%3Ctext x='20' y='140' transform='rotate(-5 50 100)'%3E?%3C/text%3E%3Ctext x='220' y='180' transform='rotate(15 280 140)'%3E!%3C/text%3E%3Ctext x='110' y='360' transform='rotate(-12 150 320)'%3E✓%3C/text%3E%3Ctext x='280' y='380' transform='rotate(8 320 350)' font-size='100'%3E?%3C/text%3E%3C/g%3E%3C/svg%3E")`,
@@ -30,28 +45,33 @@ export default function DashboardPage() {
   };
 
   const handleCreateLobby = () => {
-    // test settings
-    const mockQuestionIds = ["q1", "q2", "q3", "q4", "q5"];
+    setShowGameSettingsModal(true);
+  };
 
-    const mockSettings = {
-      timePerQuestion: 20,
-      shuffleQuestions: false,
-      showAnswer: false,
-      maxPlayers: 30,
+  // CONFIRM GAME SETTINGS AND CREATE GAME
+  const handleConfirmGameSettings = () => {
+    const safeSettings = {
+      ...gameSettings,
+      timePerQuestion: clampSetting(gameSettings.timePerQuestion, 5, 120),
+      maxPlayers: clampSetting(gameSettings.maxPlayers, 2, 50),
     };
 
-    // TODO handle undefined game returns
     socket.connect();
     socket.emit(
       "create-game",
       {
         name: user.name,
-        settings: mockSettings,
-        questionIds: mockQuestionIds,
+        role: user.role,
+        settings: gameSettings,
       },
       (game) => {
-        console.log("Game created: " + game.gameId + "\n");
-        console.log(JSON.stringify(game));
+        // ERROR HANDLING
+        if (!game) {
+          setErrorMessage("Failed to create game. Please try again.");
+          setShowError(true);
+          return;
+        }
+
         setgameId(game.gameId);
         setisHost(true);
         setSettings(game.settings);
@@ -61,30 +81,65 @@ export default function DashboardPage() {
         setCurrentQuestionIndex(game.currentQuestionIndex);
         setLeaderboard(game.leaderboard);
         setWinners(game.winners);
+        setShowGameSettingsModal(false);
         router.push(`/lobby/${game.join_code}`);
       },
     );
   };
 
+  // Game settings handler
+  const handleGameSettingChange = (field, value) => {
+    setGameSettings({
+      ...gameSettings,
+      [field]: value,
+    });
+  };
+
+  // Game settings number validation
+  const clampSetting = (value, min, max) => {
+    if (isNaN(value) || value < min) return min;
+    if (value > max) return max;
+    return value;
+  };
+
   const handleJoinLobby = (e: React.FormEvent) => {
-    //    if (!user) return; //
     e.preventDefault();
 
     socket.connect();
 
-    socket.emit("join-game", { name: user.name, join_code: code }, (game) => {
-      setgameId(game.gameId);
-      setisHost(true);
-      setSettings(game.settings);
-      setJoin_code(game.join_code);
-      setStatus(game.status);
-      setPlayers(game.players);
-      setCurrentQuestionIndex(game.currentQuestionIndex);
-      setLeaderboard(game.leaderboard);
-      setWinners(game.winners);
+    socket.emit(
+      "join-game",
+      { name: user.name, role: user.role, join_code: code },
+      (res) => {
+        // ERROR HANDLING
 
-      router.push(`/lobby/${game.join_code}`);
-    });
+        if (res) {
+          if (!res.success) {
+            setErrorMessage(res.message);
+            setShowError(true);
+            return;
+          }
+
+          setgameId(res.game.gameId);
+          setisHost(false);
+          setSettings(res.game.settings);
+          setJoin_code(res.game.join_code);
+          setStatus(res.game.status);
+          setPlayers(res.game.players);
+          setCurrentQuestionIndex(res.game.currentQuestionIndex);
+          setLeaderboard(res.game.leaderboard);
+          setWinners(res.game.winners);
+
+          router.push(`/lobby/${res.game.join_code}`);
+        } else {
+          setErrorMessage(
+            "Failed to join game. Please check code and try again.",
+          );
+          setShowError(true);
+          return;
+        }
+      },
+    );
   };
 
   const menuItems = [
@@ -109,9 +164,7 @@ export default function DashboardPage() {
     {
       label: "View Stats",
       color: "bg-purple-400",
-      onClickFunction: () => {
-        console.log("View stats Selected");
-      },
+      onClickFunction: () => router.push("/stats"),
       roles: ["student", "teacher"],
     },
     {
@@ -168,14 +221,13 @@ export default function DashboardPage() {
                 <button
                   key={index}
                   onClick={item.onClickFunction}
-                  className={`w-full border-4 border-black ${item.color} p-6 text-2xl font-black uppercase text-black text-left flex justify-between items-center transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none group`}
+                  className={`w-full border-4 border-black ${item.color} p-6 text-2xl font-black uppercase text-black text-left flex justify-between items-center cursor-pointer transition-all hover:-translate-x-2 hover:-translate-y-2 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none group`}
                 >
                   {item.label}
                   <span className="text-3xl transition-transform group-hover:rotate-12">
-                    {item.label === "Create Game"
+                    {item.label === "Create Game" || item.label === "Join Game"
                       ? "!!"
-                      : item.label === "Join Game" ||
-                          item.label === "View Stats"
+                      : item.label === "View Stats"
                         ? "✓"
                         : item.label === "View Questions"
                           ? "?"
@@ -186,46 +238,158 @@ export default function DashboardPage() {
           </div>
 
           {showJoinGameModal && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                backgroundColor: "rgba(0,0,0,0.5)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  background: "white",
-                  padding: "20px",
-                  borderRadius: "8px",
-                }}
-              >
-                <h2>Enter Game Code</h2>
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] w-96">
+                {/* Modal Header */}
+                <div className="border-b-[6px] border-black bg-cyan-400 p-6 text-center">
+                  <h2 className="text-2xl font-black uppercase italic text-black tracking-tighter">
+                    Enter Game Code
+                  </h2>
+                </div>
 
-                <input
-                  type="text"
-                  placeholder="Game Code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  style={{ marginTop: "10px", marginBottom: "10px" }}
-                />
+                {/* Modal Body */}
+                <form onSubmit={handleJoinLobby} className="p-6 space-y-4">
+                  <input
+                    type="text"
+                    placeholder="GAME CODE"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="border-4 border-black p-4 w-full font-bold text-black placeholder-black/30 outline-none focus:bg-cyan-50 focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all uppercase"
+                    required
+                  />
+                </form>
 
-                <br />
+                {/* Modal Footer */}
+                <div className="border-t-[6px] border-black p-4 bg-white flex gap-3">
+                  <button
+                    onClick={handleJoinLobby}
+                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Join
+                  </button>
 
-                <button onClick={handleJoinLobby}>Join Lobby</button>
+                  <button
+                    onClick={() => setShowJoinGameModal(false)}
+                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
-                <button
-                  onClick={() => setShowJoinGameModal(false)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Cancel
-                </button>
+          {/* GAME SETTINGS MODAL - NEW */}
+          {showGameSettingsModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)] w-96">
+                {/* Modal Header */}
+                <div className="border-b-[6px] border-black bg-green-400 p-6 text-center">
+                  <h2 className="text-2xl font-black uppercase italic text-black tracking-tighter">
+                    Game Settings
+                  </h2>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 space-y-5">
+                  {/* Time Per Question */}
+                  <div className="space-y-2 border-4 border-black p-4">
+                    <label className="font-black uppercase text-sm block">
+                      Time Per Question (seconds)
+                    </label>
+                    <input
+                      type="number"
+                      min="5"
+                      max="120"
+                      value={gameSettings.timePerQuestion}
+                      onChange={(e) =>
+                        handleGameSettingChange(
+                          "timePerQuestion",
+                          parseInt(e.target.value),
+                        )
+                      }
+                      onBlur={(e) =>
+                        handleGameSettingChange(
+                          "timePerQuestion",
+                          clampSetting(e.target.value, 5, 120),
+                        )
+                      }
+                      className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    />
+                  </div>
+
+                  {/* Max Players */}
+                  <div className="space-y-2 border-4 border-black p-4">
+                    <label className="font-black uppercase text-sm block">
+                      Max Players
+                    </label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="100"
+                      value={gameSettings.maxPlayers}
+                      onChange={(e) =>
+                        handleGameSettingChange(
+                          "maxPlayers",
+                          parseInt(e.target.value),
+                        )
+                      }
+                      onBlur={(e) =>
+                        handleGameSettingChange(
+                          "maxPlayers",
+                          clampSetting(e.target.value, 2, 50),
+                        )
+                      }
+                      className="border-4 border-black p-3 w-full font-bold text-black text-center outline-none focus:bg-green-50 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                    />
+                  </div>
+
+                  {/* Shuffle Questions Checkbox */}
+                  <label className="flex items-center gap-3 border-4 border-black p-4 cursor-pointer font-bold uppercase text-sm hover:bg-green-50 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={gameSettings.shuffleQuestions}
+                      onChange={(e) =>
+                        handleGameSettingChange(
+                          "shuffleQuestions",
+                          e.target.checked,
+                        )
+                      }
+                      className="w-5 h-5"
+                    />
+                    Shuffle Questions
+                  </label>
+
+                  {/* Show Answer Checkbox */}
+                  <label className="flex items-center gap-3 border-4 border-black p-4 cursor-pointer font-bold uppercase text-sm hover:bg-green-50 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={gameSettings.showAnswer}
+                      onChange={(e) =>
+                        handleGameSettingChange("showAnswer", e.target.checked)
+                      }
+                      className="w-5 h-5"
+                    />
+                    Show Answer
+                  </label>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="border-t-[6px] border-black p-4 bg-white flex gap-3">
+                  <button
+                    onClick={handleConfirmGameSettings}
+                    className="flex-1 border-4 border-black bg-lime-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Create Game
+                  </button>
+
+                  <button
+                    onClick={() => setShowGameSettingsModal(false)}
+                    className="flex-1 border-4 border-black bg-red-400 py-3 font-black uppercase text-black cursor-pointer transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0 active:translate-y-0 active:shadow-none"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -236,6 +400,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <ErrorAlert
+        message={errorMessage}
+        isVisible={showError}
+        onClose={() => setShowError(false)}
+      />
     </>
   );
 }
