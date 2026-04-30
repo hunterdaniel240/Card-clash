@@ -185,7 +185,7 @@ export default function PostGamePage() {
         .animate-bg-flip { animation: bg-pulse 6s infinite; }
         .animate-drift { animation: drift 40s linear infinite; }
       `}</style>
-      <div className="relative flex min-h-screen items-center justify-center p-4 overflow-hidden animate-bg-flip">
+      <div className="relative min-h-screen p-4 overflow-y-auto animate-bg-flip">
         <div
           className="absolute inset-[-100%] z-0 rotate-[-10deg] pointer-events-none animate-drift"
           style={{
@@ -193,18 +193,20 @@ export default function PostGamePage() {
             backgroundSize: "400px 400px",
           }}
         />
-        <div className="z-10 flex flex-col max-h-screen items-center overflow-y-auto pb-8">
-          <h1 className="text-5xl font-black uppercase mb-8">Game Over</h1>
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-6 pb-8 lg:grid-cols-2">
+          <h1 className="text-5xl font-black uppercase lg:col-span-2 text-center">
+  Game Over
+</h1>
 
           {/* Final Scores */}
-          <div className="w-full max-w-[700px] border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+          <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
             <div className="border-b-[6px] border-black bg-cyan-400 p-6 text-center">
               <h2 className="text-3xl font-black uppercase italic">
                 Final Scores
               </h2>
             </div>
 
-            <div className="p-6 space-y-3">
+            <div className="h-[300px] overflow-y-auto p-6 space-y-3">
               {loading ? (
                 <div className="text-center font-black text-xl">
                   Loading scores...
@@ -229,14 +231,14 @@ export default function PostGamePage() {
 
           {/* Teacher AI Summary */}
           {user.role === "teacher" && (
-            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
               <div className="border-b-[6px] border-black bg-purple-400 p-6 text-center">
                 <h2 className="text-3xl font-black uppercase italic">
                   Teacher AI Summary
                 </h2>
               </div>
 
-              <div className="p-6">
+              <div className="h-[300px] overflow-y-auto p-6 text-black">
                 {loading ? (
                   <div className="text-center font-black text-lg">
                     Generating AI summary...
@@ -260,14 +262,14 @@ export default function PostGamePage() {
 
           {/* Question Summary (Teacher Only) */}
           {user.role === "teacher" && questionsSummary.length > 0 && (
-            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)]">
               <div className="border-b-[6px] border-black bg-yellow-300 p-6 text-center">
                 <h2 className="text-3xl font-black uppercase italic">
                   Question Breakdown
                 </h2>
               </div>
 
-              <div className="p-6 space-y-4 max-h-[400px] overflow-y-auto">
+              <div className="h-[300px] overflow-y-auto p-6 space-y-4 text-black">
                 {questionsSummary.map((q, i) => (
                   <div key={i} className="border-4 border-black p-4">
                     <h3 className="font-black text-xl mb-2">
@@ -293,14 +295,14 @@ export default function PostGamePage() {
 
           {/* Student AI Summary */}
           {user.role === "student" && (
-            <div className="w-full max-w-[700px] mt-8 border-[6px] border-black bg-white shadow-[20px_20px_0px_0px_rgba(0,0,0,1)]">
+            <div className="h-[420px] overflow-hidden border-[6px] border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] lg:col-span-2">
               <div className="border-b-[6px] border-black bg-green-400 p-6 text-center">
                 <h2 className="text-3xl font-black uppercase italic">
                   Student AI Feedback
                 </h2>
               </div>
 
-              <div className="p-6">
+              <div className="h-[300px] overflow-y-auto p-6 text-black">
                 {loading ? (
                   <div className="text-center font-black text-lg">
                     Generating personalized feedback...
