@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import StatsChart from "@/components/StatsChart";
 import Loading from "@/components/Loading";
 
+const server_url =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_PROD_SERVER_URL
+    : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
+
 export default function StatsPage() {
   const { user } = useAuth() as { user: any };
   const router = useRouter();
@@ -55,7 +60,7 @@ export default function StatsPage() {
           // TEACHER STATS
           const { date_from, date_to } = getDateRange(timeframe);
 
-          let url = `http://localhost:5000/api/stats/teacher/${user.id}`;
+          let url = `${server_url}/api/stats/teacher/${user.id}`;
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
           }
@@ -87,7 +92,7 @@ export default function StatsPage() {
           // STUDENT STATS
           const { date_from, date_to } = getDateRange(timeframe);
 
-          let url = `http://localhost:5000/api/stats/student/${user.id}`;
+          let url = `${server_url}/api/stats/student/${user.id}`;
 
           if (date_from && date_to) {
             url += `?date_from=${date_from}&date_to=${date_to}`;
@@ -348,7 +353,7 @@ function StudentGameRow({
       setSummaryLoading(true);
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_DEV_SERVER_URL}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
+          `${server_url}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
         );
         const data = await res.json();
         setSummary(data.summary_text || null);
@@ -470,7 +475,7 @@ function TeacherGameRow({
       setSummaryLoading(true);
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_DEV_SERVER_URL}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
+          `${server_url}/api/aiSummaries?game_id=${game.game_id}&user_id=${userId}`,
         );
         const data = await res.json();
         setSummary(data.summary_text || null);
