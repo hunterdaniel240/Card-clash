@@ -1,6 +1,6 @@
 const server_url =
   process.env.NODE_ENV === "production"
-    ? process.env.PROD_SERVER_URL
+    ? process.env.NEXT_PUBLIC_PROD_SERVER_URL
     : process.env.NEXT_PUBLIC_DEV_SERVER_URL;
 
 export async function fetchQuestions(teacherId) {
