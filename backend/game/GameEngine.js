@@ -56,9 +56,7 @@ async function runGameLoop(socketIo, game) {
   if (game.status === "in_progress") {
     game.completed_previously = true;
 
-    if (game.settings.showAnswer && game.readyPlayers.size != 1) {
-      await sleep(timeBetweenQuestions * 1000);
-    }
+    await sleep(timeBetweenQuestions * 1000); // match frontend timer
 
     // record all question answers to history
     const answersDb_result = await uploadAnswersController({

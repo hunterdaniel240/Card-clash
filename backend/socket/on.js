@@ -39,6 +39,7 @@ function LeaveGameOn(socket) {
     const game = GameManager.getGame(join_code);
     if (game) {
       LobbyUpdateEmit(join_code, game);
+      socket.leave(join_code);
     } else {
       LobbyClosedEmit(join_code, "Host left");
     }
@@ -61,6 +62,8 @@ function KickPlayerOn(socket) {
     }
 
     GameManager.leaveGame(target_id, join_code);
+
+    targetSocket.leave(join_code);
 
     const updatedGame = GameManager.getGame(join_code);
 
@@ -120,6 +123,7 @@ function UserDisconnectingOn(socket) {
         }
         if (updatedGame) {
           LobbyUpdateEmit(room, updatedGame);
+          socket.leave(room);
         }
       }
     });
